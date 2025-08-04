@@ -3,58 +3,516 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Downloader</title>
+    <title>YouTube Downloader - yamapez.me</title>
+    <meta name="description" content="高品質なYouTube動画・音声ダウンローダー by yamapez.me">
+    <link rel="canonical" href="https://yamapez.me/tools/ytdl.html">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .brand-link {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            font-size: 0.9em;
+            transition: opacity 0.3s;
+        }
+
+        .brand-link:hover {
+            opacity: 1;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .yamapez-credit {
+            margin-top: 15px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .server-config {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .server-config h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .server-url-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .test-connection-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .test-connection-btn:hover {
+            background: #218838;
+        }
+
+        .form-section {
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+
+        .form-section.enabled {
+            opacity: 1;
+        }
+
+        .input-group {
+            margin-bottom: 25px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .url-input, .format-select, .quality-select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .url-input:focus, .format-select:focus, .quality-select:focus {
+            outline: none;
+            border-color: #4285f4;
+        }
+
+        .download-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .download-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .download-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .progress-container {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745, #20c997);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status-message {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .download-link {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 12px 24px;
+            background: #007bff;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .download-link:hover {
+            background: #0056b3;
+        }
+
+        .quality-group {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
 </head>
 <body>
-    <h1>YouTube Downloader</h1>
-    <p>このページでは、YouTubeの動画をダウンロードできます。</p>
+    <div class="container">
+        <div class="header">
+            <a href="https://yamapez.me" class="brand-link">← yamapez.me に戻る</a>
+            <h1>🎵 YouTube Downloader</h1>
+            <p>YouTubeから音声・動画を簡単ダウンロード</p>
+            <div class="yamapez-credit">
+                Powered by <strong>yamapez.me</strong>
+            </div>
+        </div>
 
-    <div id="youtube-downloader-section" style="max-width: 600px; margin: 20px auto; padding: 20px; background: #f8f9fa; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-    <h3 style="text-align: center; margin-bottom: 20px;">🎬 YouTube ダウンローダー</h3>
-    
-    <form id="yt-download-form" style="margin-bottom: 20px;">
-        <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">YouTube URL:</label>
-            <input type="url" id="yt-video-url" placeholder="https://www.youtube.com/watch?v=..." 
-                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;" required>
+        <div class="main-content">
+            <!-- サーバー設定セクション -->
+            <div class="server-config">
+                <h3>🔧 サーバー設定</h3>
+                <p>ダウンロード処理を行うサーバーのURLを設定してください：</p>
+                <input type="url" id="serverUrl" class="server-url-input" 
+                       placeholder="https://your-render-app.onrender.com" 
+                       value="">
+                <br>
+                <button id="testConnection" class="test-connection-btn">🔗 接続テスト</button>
+                <div id="connectionStatus" style="margin-top: 10px;"></div>
+            </div>
+
+            <!-- ダウンロードフォーム -->
+            <div class="form-section" id="downloadForm">
+                <div class="input-group">
+                    <label for="videoUrl">📺 YouTube URL</label>
+                    <input type="url" id="videoUrl" class="url-input" 
+                           placeholder="https://www.youtube.com/watch?v=..." required>
+                </div>
+
+                <div class="input-group">
+                    <label for="format">📁 ダウンロード形式</label>
+                    <select id="format" class="format-select">
+                        <option value="video">🎬 動画 (MP4)</option>
+                        <option value="audio">🎵 音声 (MP3)</option>
+                    </select>
+                </div>
+
+                <div class="input-group quality-group" id="qualityGroup">
+                    <label for="quality">📺 動画品質</label>
+                    <select id="quality" class="quality-select">
+                        <option value="480p">480p (標準画質)</option>
+                        <option value="720p">720p (HD)</option>
+                        <option value="1080p">1080p (フルHD)</option>
+                        <option value="1440p">1440p (2K)</option>
+                        <option value="2160p">2160p (4K)</option>
+                        <option value="best">最高画質</option>
+                    </select>
+                </div>
+
+                <button id="downloadBtn" class="download-btn" disabled>
+                    📥 サーバーに接続してください
+                </button>
+
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="status-message" id="statusMessage"></div>
+                </div>
+            </div>
         </div>
-        
-        <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">フォーマット:</label>
-            <select id="yt-format" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
-                <option value="video">🎬 動画 (MP4)</option>
-                <option value="audio">🎵 音声 (MP3)</option>
-            </select>
-        </div>
-        
-        <div id="yt-quality-group" style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">画質:</label>
-            <select id="yt-quality" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
-                <option value="480p">480p (標準画質)</option>
-                <option value="720p">720p (HD)</option>
-                <option value="1080p">1080p (フルHD)</option>
-                <option value="1440p">1440p (2K)</option>
-                <option value="2160p">2160p (4K)</option>
-                <option value="best">最高画質</option>
-            </select>
-        </div>
-        
-        <button type="submit" id="yt-download-btn" 
-                style="background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%;">
-            📥 ダウンロード開始
-        </button>
-    </form>
-    
-    <div id="yt-progress-container" style="display: none;">
-        <div style="width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; margin-bottom: 10px;">
-            <div id="yt-progress-fill" style="height: 100%; background: #28a745; width: 0%; transition: width 0.3s ease;"></div>
-        </div>
-        <div id="yt-status-message" style="padding: 10px; border-radius: 5px; text-align: center;"></div>
     </div>
-</div>
-<script>
+
+    <script>
     (function() {
-        // YouTube ダウンローダーのJavaScript
+        // 設定
+        let serverUrl = '';
+        let isConnected = false;
+        let currentTaskId = null;
+        let statusCheckInterval = null;
+
+        // DOM要素
+        const serverUrlInput = document.getElementById('serverUrl');
+        const testConnectionBtn = document.getElementById('testConnection');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const downloadFormSection = document.getElementById('downloadForm');
+        const videoUrlInput = document.getElementById('videoUrl');
+        const formatSelect = document.getElementById('format');
+        const qualityGroup = document.getElementById('qualityGroup');
+        const qualitySelect = document.getElementById('quality');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressFill = document.getElementById('progressFill');
+        const statusMessage = document.getElementById('statusMessage');
+
+        // 初期化
+        init();
+
+        function init() {
+            // イベントリスナー設定
+            testConnectionBtn.addEventListener('click', testConnection);
+            downloadBtn.addEventListener('click', startDownload);
+            formatSelect.addEventListener('change', toggleQualitySection);
+            
+            // 初期状態設定
+            toggleQualitySection();
+            
+            // ページロード時に自動接続テスト
+            if (serverUrlInput.value) {
+                testConnection();
+            }
+        }
+
+        function toggleQualitySection() {
+            qualityGroup.style.display = formatSelect.value === 'video' ? 'block' : 'none';
+        }
+
+        async function testConnection() {
+            const url = serverUrlInput.value.trim();
+            if (!url) {
+                showConnectionStatus('URLを入力してください', 'error');
+                return;
+            }
+
+            testConnectionBtn.disabled = true;
+            testConnectionBtn.textContent = '🔄 テスト中...';
+            
+            try {
+                const response = await fetch(`${url}/`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (response.ok) {
+                    serverUrl = url;
+                    isConnected = true;
+                    enableDownloadForm();
+                    showConnectionStatus('✅ 接続成功！', 'success');
+                } else {
+                    throw new Error(`サーバーエラー: ${response.status}`);
+                }
+            } catch (error) {
+                isConnected = false;
+                disableDownloadForm();
+                showConnectionStatus(`❌ 接続失敗: ${error.message}`, 'error');
+            } finally {
+                testConnectionBtn.disabled = false;
+                testConnectionBtn.textContent = '🔗 接続テスト';
+            }
+        }
+
+        function showConnectionStatus(message, type) {
+            connectionStatus.textContent = message;
+            connectionStatus.style.color = type === 'success' ? '#28a745' : '#dc3545';
+            connectionStatus.style.fontWeight = '600';
+        }
+
+        function enableDownloadForm() {
+            downloadFormSection.classList.add('enabled');
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = '📥 ダウンロード開始';
+        }
+
+        function disableDownloadForm() {
+            downloadFormSection.classList.remove('enabled');
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = '📥 サーバーに接続してください';
+        }
+
+        async function startDownload() {
+            if (!isConnected) {
+                alert('先にサーバーに接続してください');
+                return;
+            }
+
+            const url = videoUrlInput.value.trim();
+            const format = formatSelect.value;
+            const quality = qualitySelect.value;
+
+            if (!url) {
+                alert('YouTube URLを入力してください');
+                return;
+            }
+
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = '⏳ 処理中...';
+            progressContainer.style.display = 'block';
+            resetProgress();
+
+            try {
+                const response = await fetch(`${serverUrl}/download`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, format, quality })
+                });
+
+                const result = await response.json();
+
+                if (result.task_id) {
+                    currentTaskId = result.task_id;
+                    startStatusCheck();
+                } else {
+                    throw new Error(result.error || '不明なエラー');
+                }
+
+            } catch (error) {
+                showError(`ダウンロード開始に失敗しました: ${error.message}`);
+                resetDownloadButton();
+            }
+        }
+
+        function startStatusCheck() {
+            statusCheckInterval = setInterval(checkStatus, 1000);
+        }
+
+        async function checkStatus() {
+            if (!currentTaskId) return;
+
+            try {
+                const response = await fetch(`${serverUrl}/status/${currentTaskId}`);
+                const status = await response.json();
+
+                updateProgress(status);
+
+                if (status.status === 'completed') {
+                    showSuccess('ダウンロード完了！', status.filename);
+                    clearInterval(statusCheckInterval);
+                    resetDownloadButton();
+                } else if (status.status === 'error') {
+                    throw new Error(status.error || '不明なエラー');
+                }
+
+            } catch (error) {
+                showError(`ステータス確認に失敗しました: ${error.message}`);
+                clearInterval(statusCheckInterval);
+                resetDownloadButton();
+            }
+        }
+
+        function updateProgress(status) {
+            if (status.progress !== undefined) {
+                progressFill.style.width = `${status.progress}%`;
+                statusMessage.textContent = `進捗: ${status.progress}%`;
+                statusMessage.className = 'status-message';
+            }
+        }
+
+        function showSuccess(message, filename) {
+            statusMessage.innerHTML = message;
+            statusMessage.className = 'status-message status-success';
+
+            if (filename && currentTaskId) {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = `${serverUrl}/download-file/${currentTaskId}`;
+                downloadLink.download = filename;
+                downloadLink.textContent = '📥 ファイルをダウンロード';
+                downloadLink.className = 'download-link';
+                statusMessage.appendChild(downloadLink);
+            }
+        }
+
+        function showError(message) {
+            statusMessage.textContent = message;
+            statusMessage.className = 'status-message status-error';
+        }
+
+        function resetProgress() {
+            progressFill.style.width = '0%';
+            statusMessage.textContent = '';
+            statusMessage.className = 'status-message';
+        }
+
+        function resetDownloadButton() {
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = '📥 ダウンロード開始';
+        }
     })();
     </script>
 </body>
