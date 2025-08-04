@@ -7,54 +7,272 @@
 </head>
 <body>
     <h1>YouTube Downloader</h1>
-    <p>このページでは、YouTubeの動画をダウンロードできます。</p>
+    <p>現在、サーバーが起動していないため、ダウンロード機能は利用できません。</p>
+    <p>ローカル環境でサーバーを起動してからお試しください。</p>
 
     <div id="youtube-downloader-section" style="max-width: 600px; margin: 20px auto; padding: 20px; background: #f8f9fa; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-    <h3 style="text-align: center; margin-bottom: 20px;">🎬 YouTube ダウンローダー</h3>
-    
-    <form id="yt-download-form" style="margin-bottom: 20px;">
+        <h3 style="text-align: center; margin-bottom: 20px;">🎬 YouTube ダウンローダー</h3>
+        
+        <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            <h4>⚠️ 使用方法</h4>
+            <ol>
+                <li>ローカル環境でFlaskサーバーを起動してください</li>
+                <li>サーバーのURLを以下に入力してください</li>
+                <li>接続確認後、ダウンロードが可能になります</li>
+            </ol>
+        </div>
+
         <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">YouTube URL:</label>
-            <input type="url" id="yt-video-url" placeholder="https://www.youtube.com/watch?v=..." 
-                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;" required>
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">サーバーURL:</label>
+            <input type="url" id="server-url" placeholder="http://localhost:8080" value="http://localhost:8080"
+                   style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
+            <button id="test-connection" style="margin-top: 5px; background: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 3px; cursor: pointer;">
+                🔗 接続テスト
+            </button>
         </div>
         
-        <div style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">フォーマット:</label>
-            <select id="yt-format" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
-                <option value="video">🎬 動画 (MP4)</option>
-                <option value="audio">🎵 音声 (MP3)</option>
-            </select>
-        </div>
+        <form id="yt-download-form" style="margin-bottom: 20px; opacity: 0.5;" disabled>
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">YouTube URL:</label>
+                <input type="url" id="yt-video-url" placeholder="https://www.youtube.com/watch?v=..." 
+                       style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;" required disabled>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">フォーマット:</label>
+                <select id="yt-format" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;" disabled>
+                    <option value="video">🎬 動画 (MP4)</option>
+                    <option value="audio">🎵 音声 (MP3)</option>
+                </select>
+            </div>
+            
+            <div id="yt-quality-group" style="margin-bottom: 15px;">
+                <label style="display: block; margin-bottom: 5px; font-weight: bold;">画質:</label>
+                <select id="yt-quality" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;" disabled>
+                    <option value="480p">480p (標準画質)</option>
+                    <option value="720p">720p (HD)</option>
+                    <option value="1080p">1080p (フルHD)</option>
+                    <option value="1440p">1440p (2K)</option>
+                    <option value="2160p">2160p (4K)</option>
+                    <option value="best">最高画質</option>
+                </select>
+            </div>
+            
+            <button type="submit" id="yt-download-btn" 
+                    style="background: #6c757d; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: not-allowed; font-size: 16px; width: 100%;" disabled>
+                📥 サーバーに接続してください
+            </button>
+        </form>
         
-        <div id="yt-quality-group" style="margin-bottom: 15px;">
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;">画質:</label>
-            <select id="yt-quality" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px;">
-                <option value="480p">480p (標準画質)</option>
-                <option value="720p">720p (HD)</option>
-                <option value="1080p">1080p (フルHD)</option>
-                <option value="1440p">1440p (2K)</option>
-                <option value="2160p">2160p (4K)</option>
-                <option value="best">最高画質</option>
-            </select>
+        <div id="yt-progress-container" style="display: none;">
+            <div style="width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; margin-bottom: 10px;">
+                <div id="yt-progress-fill" style="height: 100%; background: #28a745; width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+            <div id="yt-status-message" style="padding: 10px; border-radius: 5px; text-align: center;"></div>
         </div>
-        
-        <button type="submit" id="yt-download-btn" 
-                style="background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; width: 100%;">
-            📥 ダウンロード開始
-        </button>
-    </form>
-    
-    <div id="yt-progress-container" style="display: none;">
-        <div style="width: 100%; height: 20px; background: #e9ecef; border-radius: 10px; overflow: hidden; margin-bottom: 10px;">
-            <div id="yt-progress-fill" style="height: 100%; background: #28a745; width: 0%; transition: width 0.3s ease;"></div>
-        </div>
-        <div id="yt-status-message" style="padding: 10px; border-radius: 5px; text-align: center;"></div>
     </div>
-</div>
-<script>
+
+    <script>
     (function() {
-        // YouTube ダウンローダーのJavaScript
+        let DOWNLOADER_API = '';
+        let isConnected = false;
+        let currentTaskId = null;
+        let statusInterval = null;
+        
+        // 接続テストボタン
+        document.getElementById('test-connection').addEventListener('click', async () => {
+            const serverUrl = document.getElementById('server-url').value.trim();
+            if (!serverUrl) {
+                alert('サーバーURLを入力してください');
+                return;
+            }
+            
+            await testConnection(serverUrl);
+        });
+        
+        async function testConnection(serverUrl) {
+            const testBtn = document.getElementById('test-connection');
+            testBtn.disabled = true;
+            testBtn.textContent = '🔄 テスト中...';
+            
+            try {
+                const response = await fetch(`${serverUrl}/`, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    DOWNLOADER_API = serverUrl;
+                    isConnected = true;
+                    enableForm();
+                    testBtn.textContent = '✅ 接続成功';
+                    testBtn.style.background = '#28a745';
+                } else {
+                    throw new Error('サーバーに接続できませんでした');
+                }
+            } catch (error) {
+                isConnected = false;
+                testBtn.textContent = '❌ 接続失敗';
+                testBtn.style.background = '#dc3545';
+                alert('接続エラー: ' + error.message + '\n\nCORSエラーが発生している可能性があります。ローカル環境でテストしてください。');
+            }
+            
+            testBtn.disabled = false;
+            setTimeout(() => {
+                testBtn.textContent = '🔗 接続テスト';
+                testBtn.style.background = '#28a745';
+            }, 3000);
+        }
+        
+        function enableForm() {
+            const form = document.getElementById('yt-download-form');
+            const inputs = form.querySelectorAll('input, select, button');
+            
+            form.style.opacity = '1';
+            inputs.forEach(input => {
+                input.disabled = false;
+            });
+            
+            document.getElementById('yt-download-btn').textContent = '📥 ダウンロード開始';
+            document.getElementById('yt-download-btn').style.background = '#007bff';
+            document.getElementById('yt-download-btn').style.cursor = 'pointer';
+        }
+        
+        // フォーム送信イベント
+        document.getElementById('yt-download-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isConnected) {
+                alert('最初にサーバーに接続してください');
+                return;
+            }
+            
+            const url = document.getElementById('yt-video-url').value;
+            const format = document.getElementById('yt-format').value;
+            const quality = document.getElementById('yt-quality').value;
+            
+            if (!url) {
+                alert('YouTube URLを入力してください');
+                return;
+            }
+            
+            await startYTDownload(url, format, quality);
+        });
+        
+        // フォーマット変更イベント
+        document.getElementById('yt-format').addEventListener('change', (e) => {
+            const qualityGroup = document.getElementById('yt-quality-group');
+            qualityGroup.style.display = e.target.value === 'video' ? 'block' : 'none';
+        });
+        
+        async function startYTDownload(url, format, quality) {
+            const downloadBtn = document.getElementById('yt-download-btn');
+            const progressContainer = document.getElementById('yt-progress-container');
+            
+            downloadBtn.disabled = true;
+            downloadBtn.textContent = '⏳ 処理中...';
+            downloadBtn.style.background = '#6c757d';
+            progressContainer.style.display = 'block';
+            
+            try {
+                const response = await fetch(`${DOWNLOADER_API}/download`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, format, quality })
+                });
+                
+                const result = await response.json();
+                
+                if (result.task_id) {
+                    currentTaskId = result.task_id;
+                    checkYTProgress();
+                } else {
+                    throw new Error(result.error || '不明なエラー');
+                }
+                
+            } catch (error) {
+                showYTError('ダウンロード開始に失敗しました: ' + error.message);
+                resetYTUI();
+            }
+        }
+        
+        async function checkYTProgress() {
+            if (!currentTaskId) return;
+            
+            try {
+                const response = await fetch(`${DOWNLOADER_API}/status/${currentTaskId}`);
+                const status = await response.json();
+                
+                updateYTProgress(status);
+                
+                if (status.status === 'completed') {
+                    showYTSuccess('ダウンロード完了！', status.filename);
+                    clearInterval(statusInterval);
+                    resetYTUI();
+                } else if (status.status === 'error') {
+                    throw new Error(status.error || '不明なエラー');
+                } else {
+                    statusInterval = setTimeout(checkYTProgress, 1000);
+                }
+                
+            } catch (error) {
+                showYTError('ステータス確認に失敗しました: ' + error.message);
+                clearInterval(statusInterval);
+                resetYTUI();
+            }
+        }
+        
+        function updateYTProgress(status) {
+            const progressFill = document.getElementById('yt-progress-fill');
+            const statusMessage = document.getElementById('yt-status-message');
+            
+            if (status.progress !== undefined) {
+                progressFill.style.width = status.progress + '%';
+                statusMessage.textContent = `進捗: ${status.progress}%`;
+                statusMessage.style.background = '#d4edda';
+                statusMessage.style.color = '#155724';
+                statusMessage.style.border = '1px solid #c3e6cb';
+            }
+        }
+        
+        function showYTSuccess(message, filename) {
+            const statusMessage = document.getElementById('yt-status-message');
+            statusMessage.innerHTML = message;
+            statusMessage.style.background = '#d4edda';
+            statusMessage.style.color = '#155724';
+            statusMessage.style.border = '1px solid #c3e6cb';
+            
+            if (filename && currentTaskId) {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = `${DOWNLOADER_API}/download-file/${currentTaskId}`;
+                downloadLink.download = filename;
+                downloadLink.textContent = '📥 ファイルをダウンロード';
+                downloadLink.style.display = 'block';
+                downloadLink.style.marginTop = '10px';
+                downloadLink.style.color = '#007bff';
+                downloadLink.style.textDecoration = 'none';
+                downloadLink.style.fontWeight = 'bold';
+                
+                statusMessage.appendChild(downloadLink);
+            }
+        }
+        
+        function showYTError(message) {
+            const statusMessage = document.getElementById('yt-status-message');
+            statusMessage.textContent = message;
+            statusMessage.style.background = '#f8d7da';
+            statusMessage.style.color = '#721c24';
+            statusMessage.style.border = '1px solid #f5c6cb';
+        }
+        
+        function resetYTUI() {
+            const downloadBtn = document.getElementById('yt-download-btn');
+            downloadBtn.disabled = false;
+            downloadBtn.textContent = '📥 ダウンロード開始';
+            downloadBtn.style.background = '#007bff';
+        }
     })();
     </script>
 </body>
