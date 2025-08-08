@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原神 聖遺物スコア計算ツール</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .api-section {
+            background: #f0f8ff;
+            border-color: #4CAF50;
+        }
+        
+        .manual-section {
+            background: #fff8f0;
+            border-color: #FF9800;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus, select:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+        
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .status.loading {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+        
+        .result {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 25px;
+        }
+        
+        .score-value {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .rating {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .rating-guide {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .character-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .small-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 600px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 原神 聖遺物スコア計算ツール</h1>
+        
+        <!-- API読み込みセクション -->
+        <div class="section api-section">
+            <h3>📡 Enka.Network APIから読み込み</h3>
+            <div class="form-group">
+                <label for="uid">原神UID</label>
+                <input type="text" id="uid" placeholder="例: 123456789" maxlength="10">
+                <div class="small-text">※ショーケースを公開に設定してください</div>
+            </div>
+            <button onclick="loadFromAPI()" id="loadBtn">データを読み込み</button>
+            <div id="loadStatus"></div>
+            
+            <div id="characterSelect" class="hidden">
+                <div class="form-group">
+                    <label for="characters">キャラクター選択</label>
+                    <select id="characters" onchange="selectCharacter()">
+                        <option value="">キャラクターを選択...</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 手動入力セクション -->
+        <div class="section manual-section">
+            <h3>✏️ 手動入力</h3>
+            <div class="grid">
+                <div class="form-group">
+                    <label for="critRate">会心率 (%)</label>
+                    <input type="number" id="critRate" min="0" max="100" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="critDmg">会心ダメージ (%)</label>
+                    <input type="number" id="critDmg" min="0" max="300" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="atk">攻撃力 (%)</label>
+                    <input type="number" id="atk" min="0" max="100" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="hp">HP (%)</label>
+                    <input type="number" id="hp" min="0" max="100" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="def">防御力 (%)</label>
+                    <input type="number" id="def" min="0" max="100" step="0.1" value="0">
+                </div>
+                <div class="form-group">
+                    <label for="em">元素熟知</label>
+                    <input type="number" id="em" min="0" max="1000" step="1" value="0">
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="er">元素チャージ効率 (%)</label>
+                <input type="number" id="er" min="0" max="300" step="0.1" value="0">
+            </div>
+        </div>
+        
+        <!-- 結果表示 -->
+        <div id="result" class="result hidden">
+            <div class="score-value" id="scoreValue">0</div>
+            <div class="rating" id="rating"></div>
+            <div class="rating-guide">
+                40+ 優秀 | 30-39 良好 | 20-29 平均 | 20未満 要改善
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameData = null;
+        
+        // キャラクター名マップ（主要キャラクターのみ）
+        const CHARACTER_NAMES = {
+            10000002: "神里綾華",
+            10000003: "ジン", 
+            10000005: "旅人（風）",
+            10000006: "リサ",
+            10000007: "旅人（岩）",
+            10000014: "バーバラ",
+            10000015: "香菱",
+            10000016: "ディルック",
+            10000020: "レザー",
+            10000021: "アンバー",
+            10000022: "ベネット",
+            10000023: "行秋",
+            10000024: "ノエル",
+            10000025: "フィッシュル",
+            10000026: "ショウ",
+            10000027: "北斗",
+            10000029: "重雲",
+            10000030: "鍾離",
+            10000033: "タルタリヤ",
+            10000034: "ディオナ",
+            10000035: "モナ",
+            10000036: "刻晴",
+            10000037: "甘雨",
+            10000038: "アルベド",
+            10000041: "モナ",
+            10000042: "刻晴",
+            10000043: "スクロース",
+            10000044: "ウェンティ",
+            10000045: "クレー",
+            10000047: "ジン",
+            10000048: "ディルック",
+            10000049: "七七",
+            10000051: "ロサリア",
+            10000052: "胡桃",
+            10000053: "楓原万葉",
+            10000054: "煙緋",
+            10000055: "エウルア",
+            10000056: "神里綾香",
+            10000057: "宵宮",
+            10000058: "早柚",
+            10000059: "雷電将軍",
+            10000060: "九条裟羅",
+            10000061: "珊瑚宮心海",
+            10000062: "五郎",
+            10000063: "荒瀧一斗",
+            10000064: "雲菫",
+            10000065: "申鶴",
+            10000066: "八重神子",
+            10000067: "神里綾人",
+            10000068: "久岐忍",
+            10000069: "鹿野院平蔵",
+            10000070: "ティナリ",
+            10000071: "コレイ",
+            10000072: "ドリー",
+            10000073: "トーマ",
+            10000074: "ニィロウ",
+            10000075: "ナヒーダ",
+            10000076: "レイラ",
+            10000077: "放浪者",
+            10000078: "ファルザン",
+            10000079: "ヨォーヨ",
+            10000080: "アルハイゼン",
+            10000082: "ディシア",
+            10000083: "ミカ",
+            10000084: "カーヴェ",
+            10000085: "白朮",
+            10000086: "リネ",
+            10000087: "リオセスリ",
+            10000088: "シャルロット",
+            10000089: "フリーナ",
+            10000090: "閑雲",
+            10000091: "千織"
+        };
+        
+        // APIからデータを読み込み
+        async function loadFromAPI() {
+            const uid = document.getElementById('uid').value.trim();
+            const loadBtn = document.getElementById('loadBtn');
+            const loadStatus = document.getElementById('loadStatus');
+            
+            if (!uid || !/^\d{9,10}$/.test(uid)) {
+                showStatus('error', 'UIDは9〜10桁の数字で入力してください');
+                return;
+            }
+            
+            loadBtn.disabled = true;
+            loadBtn.textContent = '読み込み中...';
+            showStatus('loading', 'データを取得中...');
+            
+            try {
+                // CORSプロキシを使用
+                const proxyUrl = 'https://api.allorigins.win/get?url=';
+                const apiUrl = `https://enka.network/api/uid/${uid}`;
+                const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+                
+                if (!response.ok) {
+                    throw new Error('データの取得に失敗しました');
+                }
+                
+                const data = await response.json();
+                gameData = JSON.parse(data.contents);
+                
+                if (!gameData.avatarInfoList || gameData.avatarInfoList.length === 0) {
+                    throw new Error('ショーケースが非公開またはキャラクターが設定されていません');
+                }
+                
+                populateCharacters();
+                showStatus('success', 'データの読み込みが完了しました！');
+                document.getElementById('characterSelect').classList.remove('hidden');
+                
+            } catch (error) {
+                showStatus('error', error.message);
+                console.error('API Error:', error);
+            } finally {
+                loadBtn.disabled = false;
+                loadBtn.textContent = 'データを読み込み';
+            }
+        }
+        
+        // ステータス表示
+        function showStatus(type, message) {
+            const status = document.getElementById('loadStatus');
+            status.className = `status ${type}`;
+            status.textContent = message;
+        }
+        
+        // キャラクター選択肢を設定
+        function populateCharacters() {
+            const select = document.getElementById('characters');
+            select.innerHTML = '<option value="">キャラクターを選択...</option>';
+            
+            gameData.avatarInfoList.forEach((character, index) => {
+                const name = CHARACTER_NAMES[character.avatarId] || `キャラクター ${character.avatarId}`;
+                const level = character.propMap?.["4001"]?.val || "??";
+                
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `${name} (Lv.${level})`;
+                select.appendChild(option);
+            });
+        }
+        
+        // キャラクター選択時
+        function selectCharacter() {
+            const index = document.getElementById('characters').value;
+            if (!index) {
+                resetInputs();
+                return;
+            }
+            
+            const character = gameData.avatarInfoList[index];
+            if (!character.equipList) {
+                alert('このキャラクターには装備データがありません');
+                return;
+            }
+            
+            const stats = calculateArtifactStats(character.equipList);
+            updateInputs(stats);
+            calculateScore();
+        }
+        
+        // 聖遺物統計を計算
+        function calculateArtifactStats(equipList) {
+            const stats = {
+                critRate: 0,
+                critDmg: 0,
+                atk: 0,
+                hp: 0,
+                def: 0,
+                em: 0,
+                er: 0
+            };
+            
+            equipList.forEach(item => {
+                if (!item.reliquary?.appendPropIdList) return;
+                
+                item.reliquary.appendPropIdList.forEach(prop => {
+                    const value = prop.statValue;
+                    switch (prop.propId) {
+                        case "FIGHT_PROP_CRITICAL":
+                            stats.critRate += value * 100;
+                            break;
+                        case "FIGHT_PROP_CRITICAL_HURT":
+                            stats.critDmg += value * 100;
+                            break;
+                        case "FIGHT_PROP_ATTACK_PERCENT":
+                            stats.atk += value * 100;
+                            break;
+                        case "FIGHT_PROP_HP_PERCENT":
+                            stats.hp += value * 100;
+                            break;
+                        case "FIGHT_PROP_DEFENSE_PERCENT":
+                            stats.def += value * 100;
+                            break;
+                        case "FIGHT_PROP_ELEMENT_MASTERY":
+                            stats.em += value;
+                            break;
+                        case "FIGHT_PROP_CHARGE_EFFICIENCY":
+                            stats.er += value * 100;
+                            break;
+                    }
+                });
+            });
+            
+            return stats;
+        }
+        
+        // 入力フィールドを更新
+        function updateInputs(stats) {
+            document.getElementById('critRate').value = stats.critRate.toFixed(1);
+            document.getElementById('critDmg').value = stats.critDmg.toFixed(1);
+            document.getElementById('atk').value = stats.atk.toFixed(1);
+            document.getElementById('hp').value = stats.hp.toFixed(1);
+            document.getElementById('def').value = stats.def.toFixed(1);
+            document.getElementById('em').value = Math.round(stats.em);
+            document.getElementById('er').value = stats.er.toFixed(1);
+        }
+        
+        // 入力をリセット
+        function resetInputs() {
+            document.getElementById('critRate').value = 0;
+            document.getElementById('critDmg').value = 0;
+            document.getElementById('atk').value = 0;
+            document.getElementById('hp').value = 0;
+            document.getElementById('def').value = 0;
+            document.getElementById('em').value = 0;
+            document.getElementById('er').value = 0;
+            document.getElementById('result').classList.add('hidden');
+        }
+        
+        // スコア計算
+        function calculateScore() {
+            const critRate = parseFloat(document.getElementById('critRate').value) || 0;
+            const critDmg = parseFloat(document.getElementById('critDmg').value) || 0;
+            const atk = parseFloat(document.getElementById('atk').value) || 0;
+            const hp = parseFloat(document.getElementById('hp').value) || 0;
+            const def = parseFloat(document.getElementById('def').value) || 0;
+            const em = parseFloat(document.getElementById('em').value) || 0;
+            const er = parseFloat(document.getElementById('er').value) || 0;
+            
+            // スコア計算式
+            const score = (critRate * 2) + critDmg + (atk * 0.75) + (hp * 0.75) + (def * 0.75) + (em * 0.25) + (er * 0.75);
+            
+            // 結果表示
+            document.getElementById('scoreValue').textContent = score.toFixed(1);
+            
+            const ratingElement = document.getElementById('rating');
+            if (score >= 40) {
+                ratingElement.textContent = '優秀！✨';
+                ratingElement.style.color = '#ff6b35';
+            } else if (score >= 30) {
+                ratingElement.textContent = '良好 👍';
+                ratingElement.style.color = '#f7931e';
+            } else if (score >= 20) {
+                ratingElement.textContent = '平均 📊';
+                ratingElement.style.color = '#ffc425';
+            } else {
+                ratingElement.textContent = '要改善 💪';
+                ratingElement.style.color = '#ccc';
+            }
+            
+            document.getElementById('result').classList.remove('hidden');
+        }
+        
+        // リアルタイム計算
+        document.querySelectorAll('input[type="number"]').forEach(input => {
+            input.addEventListener('input', calculateScore);
+        });
+        
+        // 初期計算
+        calculateScore();
+    </script>
+</body>
+</html>
