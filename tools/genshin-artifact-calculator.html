@@ -243,10 +243,27 @@
         .error {
             background: #f8d7da;
             color: #721c24;
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
             margin: 20px 0;
             border: 1px solid #f5c6cb;
+            white-space: pre-line;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .error h4 {
+            margin-bottom: 10px;
+            color: #721c24;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #c3e6cb;
         }
 
         .total-score {
@@ -337,6 +354,13 @@
             </div>
             <button class="button" onclick="fetchPlayerData()">キャラクター情報を取得</button>
             <button class="button" onclick="calculateScore()" id="calculate-btn" style="margin-left: 10px;" disabled>スコア計算</button>
+            <button class="button" onclick="testConnection()" style="margin-left: 10px; background: #28a745;">接続テスト</button>
+            <button class="button" onclick="toggleDebug()" style="margin-left: 10px; background: #6c757d; font-size: 12px;">デバッグ</button>
+        </div>
+
+        <div id="debug-info" style="display: none; background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 20px 0; font-family: monospace; font-size: 12px; border: 1px solid #dee2e6;">
+            <h4>デバッグ情報</h4>
+            <div id="debug-content"></div>
         </div>
 
         <div id="loading" class="loading" style="display: none;">
@@ -388,8 +412,17 @@
     <script src="genshin-data.js"></script>
 
     <script>
-        // Enka Network APIのベースURL
-        const API_BASE = 'https://enka.network/api/uid/';
+        // Enka Network APIのベースURL（CORSプロキシ経由）
+        const API_BASE = 'https://api.allorigins.win/raw?url=https://enka.network/api/uid/';
+        
+        // バックアップのプロキシサーバー
+        const BACKUP_PROXIES = [
+            'https://cors-anywhere.herokuapp.com/https://enka.network/api/uid/',
+            'https://api.codetabs.com/v1/proxy?quest=https://enka.network/api/uid/',
+            'https://thingproxy.freeboard.io/fetch/https://enka.network/api/uid/'
+        ];
+        
+        let currentProxyIndex = 0;
         
         // 聖遺物部位の名前マッピング
         const ARTIFACT_TYPES = {
@@ -451,27 +484,64 @@
             showLoading(true);
             hideError();
 
-            try {
-                const response = await fetch(`${API_BASE}${uid}`);
-                
-                if (!response.ok) {
-                    throw new Error(`APIエラー: ${response.status}`);
-                }
+            // 複数のプロキシサーバーを試行
+            for (let i = 0; i <= BACKUP_PROXIES.length; i++) {
+                try {
+                    let apiUrl;
+                    if (i === 0) {
+                        apiUrl = `${API_BASE}${uid}`;
+                    } else {
+                        apiUrl = `${BACKUP_PROXIES[i - 1]}${uid}`;
+                    }
 
-                const data = await response.json();
-                
-                if (!data.playerInfo) {
-                    throw new Error('プレイヤー情報が見つかりません');
-                }
+                    console.log(`Trying API: ${apiUrl}`);
+                    
+                    const response = await fetch(apiUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                        },
+                        // タイムアウトを設定
+                        signal: AbortSignal.timeout(10000)
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
 
-                playerData = data;
-                populateCharacterSelect();
-                showLoading(false);
-                
-            } catch (error) {
-                console.error('Error fetching player data:', error);
-                showError(`データの取得に失敗しました: ${error.message}`);
-                showLoading(false);
+                    const data = await response.json();
+                    
+                    if (!data.playerInfo) {
+                        throw new Error('プレイヤー情報が見つかりません。UIDが正しいか、キャラクターが公開設定になっているか確認してください。');
+                    }
+
+                    playerData = data;
+                    populateCharacterSelect();
+                    showLoading(false);
+                    showSuccess(`✅ プレイヤーデータの取得に成功しました！\n${data.playerInfo.showAvatarInfoList?.length || 0}体のキャラクターが見つかりました。`);
+                    console.log('Data fetched successfully:', data);
+                    return; // 成功したら終了
+                    
+                } catch (error) {
+                    console.error(`Proxy ${i} failed:`, error);
+                    
+                    // 最後のプロキシでも失敗した場合
+                    if (i === BACKUP_PROXIES.length) {
+                        showError(`すべてのプロキシサーバーでデータの取得に失敗しました。以下をご確認ください：
+                        
+1. UIDが正しく入力されているか確認してください
+2. 原神内でキャラクター詳細が「公開」に設定されているか確認してください
+3. しばらく時間をおいてから再試行してください
+4. インターネット接続を確認してください
+
+エラー詳細: ${error.message}`);
+                        showLoading(false);
+                        return;
+                    }
+                    
+                    // 次のプロキシを試行する前に少し待機
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                }
             }
         }
 
@@ -850,6 +920,77 @@
             }
         }
 
+        // 接続テスト機能
+        async function testConnection() {
+            showLoading(true);
+            hideError();
+            
+            const testResults = [];
+            
+            // メインAPIとプロキシサーバーの接続テスト
+            const testUrls = [
+                { name: 'AllOrigins Proxy', url: API_BASE + '600000000' },
+                ...BACKUP_PROXIES.map((proxy, index) => ({
+                    name: `Backup Proxy ${index + 1}`,
+                    url: proxy + '600000000'
+                }))
+            ];
+            
+            for (const testUrl of testUrls) {
+                try {
+                    console.log(`Testing: ${testUrl.name}`);
+                    const response = await fetch(testUrl.url, {
+                        method: 'GET',
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    
+                    testResults.push({
+                        name: testUrl.name,
+                        status: response.ok ? 'OK' : `Error ${response.status}`,
+                        success: response.ok
+                    });
+                } catch (error) {
+                    testResults.push({
+                        name: testUrl.name,
+                        status: `Failed: ${error.message}`,
+                        success: false
+                    });
+                }
+            }
+            
+            showLoading(false);
+            
+            // テスト結果を表示
+            const workingProxies = testResults.filter(result => result.success);
+            const failedProxies = testResults.filter(result => !result.success);
+            
+            let message = '接続テスト結果:\n\n';
+            
+            if (workingProxies.length > 0) {
+                message += '✅ 利用可能なプロキシ:\n';
+                workingProxies.forEach(proxy => {
+                    message += `  - ${proxy.name}: ${proxy.status}\n`;
+                });
+                message += '\n';
+            }
+            
+            if (failedProxies.length > 0) {
+                message += '❌ 利用できないプロキシ:\n';
+                failedProxies.forEach(proxy => {
+                    message += `  - ${proxy.name}: ${proxy.status}\n`;
+                });
+                message += '\n';
+            }
+            
+            if (workingProxies.length === 0) {
+                message += 'すべてのプロキシサーバーへの接続に失敗しました。\nインターネット接続を確認するか、しばらく時間をおいてから再試行してください。';
+                showError(message);
+            } else {
+                message += `${workingProxies.length}個のプロキシサーバーが利用可能です。\nUIDを入力してキャラクター情報の取得を試してください。`;
+                alert(message);
+            }
+        }
+
         function getCharacterName(avatarId) {
             return CHARACTER_NAMES[avatarId] || `キャラクター ${avatarId}`;
         }
@@ -860,12 +1001,78 @@
 
         function showError(message) {
             const errorDiv = document.getElementById('error');
-            errorDiv.textContent = message;
+            
+            // エラーメッセージに解決策を含める
+            let fullMessage = message;
+            if (message.includes('Failed to fetch') || message.includes('CORS')) {
+                fullMessage = `🚫 API接続エラー
+
+${message}
+
+📋 解決方法:
+1. 「接続テスト」ボタンでプロキシサーバーの状態を確認
+2. UIDが正しく入力されているか確認（9桁の数字）
+3. 原神内でキャラクター詳細を「公開」に設定
+4. しばらく時間をおいてから再試行
+5. 別のブラウザまたはデバイスで試行
+
+💡 ヒント: 
+- Enka Network APIは時々メンテナンス中になります
+- VPNを使用している場合は一時的に無効にしてください`;
+            }
+            
+            errorDiv.innerHTML = fullMessage;
             errorDiv.style.display = 'block';
         }
 
         function hideError() {
             document.getElementById('error').style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success';
+            successDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            const errorDiv = document.getElementById('error');
+            container.insertBefore(successDiv, errorDiv.nextSibling);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 5000);
+        }
+
+        // デバッグ機能
+        let debugMode = false;
+        
+        function toggleDebug() {
+            debugMode = !debugMode;
+            const debugDiv = document.getElementById('debug-info');
+            debugDiv.style.display = debugMode ? 'block' : 'none';
+            
+            if (debugMode) {
+                updateDebugInfo();
+            }
+        }
+        
+        function updateDebugInfo() {
+            if (!debugMode) return;
+            
+            const debugContent = document.getElementById('debug-content');
+            const info = {
+                'User Agent': navigator.userAgent,
+                'Current Time': new Date().toISOString(),
+                'API Base': API_BASE,
+                'Backup Proxies': BACKUP_PROXIES.length,
+                'Player Data': playerData ? 'Loaded' : 'Not loaded',
+                'Selected Character': selectedCharacter ? getCharacterName(selectedCharacter.avatarId) : 'None',
+                'Console Errors': 'Check browser console for details'
+            };
+            
+            debugContent.innerHTML = Object.entries(info)
+                .map(([key, value]) => `<strong>${key}:</strong> ${value}`)
+                .join('<br>');
         }
 
         // Enter キーでの検索をサポート
