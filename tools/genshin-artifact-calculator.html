@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>原神 聖遺物スコア計算機</title>
+    <link rel="stylesheet" href="genshin-styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .input-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.3s ease;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .character-info {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .character-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .character-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin-right: 20px;
+            border: 3px solid #667eea;
+        }
+
+        .character-details h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .character-details p {
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .artifact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .artifact-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e9ecef;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .artifact-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .artifact-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .artifact-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            margin-right: 15px;
+            background: #667eea;
+        }
+
+        .artifact-info h3 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .artifact-info p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .stats-list {
+            list-style: none;
+        }
+
+        .stats-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stats-list li:last-child {
+            border-bottom: none;
+        }
+
+        .stat-name {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .score-display {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .score-display h4 {
+            margin-bottom: 5px;
+        }
+
+        .score-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .total-score {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            text-align: center;
+            display: none;
+        }
+
+        .total-score h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .total-score-value {
+            font-size: 3rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .score-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .score-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .score-item h4 {
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .score-item .score {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .artifact-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .score-breakdown {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>原神 聖遺物スコア計算機</h1>
+            <p>Enka Network APIを使用してキャラクターの聖遺物スコアを計算します</p>
+        </div>
+
+        <div class="input-section">
+            <div class="input-group">
+                <label for="uid">UID (原神内のUID):</label>
+                <input type="text" id="uid" placeholder="例: 123456789" maxlength="9">
+            </div>
+            <div class="input-group">
+                <label for="character-select">計算するキャラクター:</label>
+                <select id="character-select" disabled>
+                    <option value="">まずUIDを入力してキャラクターを取得してください</option>
+                </select>
+            </div>
+            <button class="button" onclick="fetchPlayerData()">キャラクター情報を取得</button>
+            <button class="button" onclick="calculateScore()" id="calculate-btn" style="margin-left: 10px;" disabled>スコア計算</button>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">
+            データを読み込んでいます...
+        </div>
+
+        <div id="error" class="error" style="display: none;"></div>
+
+        <div id="character-info" class="character-info">
+            <div class="character-header">
+                <img id="character-icon" class="character-icon" src="" alt="キャラクターアイコン">
+                <div class="character-details">
+                    <h2 id="character-name"></h2>
+                    <p>レベル: <span id="character-level"></span></p>
+                    <p>星座: <span id="character-constellation"></span></p>
+                    <p>天賦レベル: <span id="character-talents"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="total-score" class="total-score">
+            <h2>総合聖遺物スコア</h2>
+            <div class="total-score-value" id="total-score-value">0</div>
+            <div class="score-breakdown" id="score-breakdown"></div>
+        </div>
+
+        <div id="set-bonus" class="set-bonus-section">
+            <h2>セット効果</h2>
+            <div id="set-bonus-list"></div>
+        </div>
+
+        <div id="suggestions" class="suggestions-section">
+            <h2>改善提案</h2>
+            <div id="suggestions-list"></div>
+        </div>
+
+        <div id="artifacts" class="artifact-grid"></div>
+
+        <div id="export" class="export-section">
+            <h2>データエクスポート</h2>
+            <div class="export-buttons">
+                <button class="export-button" onclick="exportToJSON()">JSON形式でエクスポート</button>
+                <button class="export-button" onclick="exportToImage()">画像として保存</button>
+                <button class="export-button" onclick="shareResults()">結果を共有</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="genshin-data.js"></script>
+
+    <script>
+        // Enka Network APIのベースURL
+        const API_BASE = 'https://enka.network/api/uid/';
+        
+        // 聖遺物部位の名前マッピング
+        const ARTIFACT_TYPES = {
+            'EQUIP_BRACER': '生の花',
+            'EQUIP_NECKLACE': '死の羽',
+            'EQUIP_SHOES': '時の砂',
+            'EQUIP_RING': '空の杯',
+            'EQUIP_DRESS': '理の冠'
+        };
+
+        // ステータス名のマッピング
+        const STAT_NAMES = {
+            'FIGHT_PROP_HP': 'HP',
+            'FIGHT_PROP_HP_PERCENT': 'HP%',
+            'FIGHT_PROP_ATTACK': '攻撃力',
+            'FIGHT_PROP_ATTACK_PERCENT': '攻撃力%',
+            'FIGHT_PROP_DEFENSE': '防御力',
+            'FIGHT_PROP_DEFENSE_PERCENT': '防御力%',
+            'FIGHT_PROP_CRITICAL': '会心率',
+            'FIGHT_PROP_CRITICAL_HURT': '会心ダメージ',
+            'FIGHT_PROP_CHARGE_EFFICIENCY': '元素チャージ効率',
+            'FIGHT_PROP_HEAL_ADD': '与える治療効果',
+            'FIGHT_PROP_ELEMENT_MASTERY': '元素熟知',
+            'FIGHT_PROP_PHYSICAL_ADD_HURT': '物理ダメージ',
+            'FIGHT_PROP_FIRE_ADD_HURT': '炎元素ダメージ',
+            'FIGHT_PROP_ELEC_ADD_HURT': '雷元素ダメージ',
+            'FIGHT_PROP_WATER_ADD_HURT': '水元素ダメージ',
+            'FIGHT_PROP_DENDRO_ADD_HURT': '草元素ダメージ',
+            'FIGHT_PROP_WIND_ADD_HURT': '風元素ダメージ',
+            'FIGHT_PROP_ROCK_ADD_HURT': '岩元素ダメージ',
+            'FIGHT_PROP_ICE_ADD_HURT': '氷元素ダメージ'
+        };
+
+        // スコア計算の重み
+        const SCORE_WEIGHTS = {
+            'FIGHT_PROP_CRITICAL': 2,
+            'FIGHT_PROP_CRITICAL_HURT': 1,
+            'FIGHT_PROP_ATTACK_PERCENT': 0.75,
+            'FIGHT_PROP_HP_PERCENT': 0.75,
+            'FIGHT_PROP_DEFENSE_PERCENT': 0.75,
+            'FIGHT_PROP_ELEMENT_MASTERY': 0.25,
+            'FIGHT_PROP_CHARGE_EFFICIENCY': 0.75,
+            'FIGHT_PROP_ATTACK': 0.398,
+            'FIGHT_PROP_HP': 0.0149,
+            'FIGHT_PROP_DEFENSE': 0.499
+        };
+
+        let playerData = null;
+        let selectedCharacter = null;
+
+        async function fetchPlayerData() {
+            const uid = document.getElementById('uid').value.trim();
+            
+            if (!uid || uid.length < 9) {
+                showError('有効なUIDを入力してください（9桁の数字）');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch(`${API_BASE}${uid}`);
+                
+                if (!response.ok) {
+                    throw new Error(`APIエラー: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data.playerInfo) {
+                    throw new Error('プレイヤー情報が見つかりません');
+                }
+
+                playerData = data;
+                populateCharacterSelect();
+                showLoading(false);
+                
+            } catch (error) {
+                console.error('Error fetching player data:', error);
+                showError(`データの取得に失敗しました: ${error.message}`);
+                showLoading(false);
+            }
+        }
+
+        function populateCharacterSelect() {
+            const select = document.getElementById('character-select');
+            select.innerHTML = '<option value="">キャラクターを選択してください</option>';
+            
+            if (playerData.playerInfo.showAvatarInfoList) {
+                playerData.playerInfo.showAvatarInfoList.forEach((character, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = getCharacterName(character.avatarId);
+                    select.appendChild(option);
+                });
+                
+                select.disabled = false;
+                document.getElementById('calculate-btn').disabled = false;
+            }
+        }
+
+        function calculateScore() {
+            const selectedIndex = document.getElementById('character-select').value;
+            
+            if (selectedIndex === '') {
+                showError('キャラクターを選択してください');
+                return;
+            }
+
+            selectedCharacter = playerData.playerInfo.showAvatarInfoList[selectedIndex];
+            displayCharacterInfo();
+            displayArtifacts();
+            calculateTotalScore();
+        }
+
+        function displayCharacterInfo() {
+            const characterInfo = document.getElementById('character-info');
+            const characterIcon = document.getElementById('character-icon');
+            const characterName = document.getElementById('character-name');
+            const characterLevel = document.getElementById('character-level');
+            const characterConstellation = document.getElementById('character-constellation');
+            const characterTalents = document.getElementById('character-talents');
+
+            characterName.textContent = getCharacterName(selectedCharacter.avatarId);
+            characterLevel.textContent = selectedCharacter.propMap['4001'].val || 'N/A';
+            characterConstellation.textContent = (selectedCharacter.talentIdList ? selectedCharacter.talentIdList.length : 0) + '凸';
+            
+            if (selectedCharacter.skillLevelMap) {
+                const talents = Object.values(selectedCharacter.skillLevelMap).slice(0, 3);
+                characterTalents.textContent = talents.join(' / ');
+            } else {
+                characterTalents.textContent = 'N/A';
+            }
+
+            // キャラクターアイコンのURL（実際のAPIから取得する場合は適切なURLを設定）
+            characterIcon.src = `https://enka.network/ui/UI_AvatarIcon_${selectedCharacter.avatarId}.png`;
+            characterIcon.onerror = function() {
+                this.src = 'https://via.placeholder.com/80x80?text=Character';
+            };
+
+            characterInfo.style.display = 'block';
+        }
+
+        function displayArtifacts() {
+            const artifactsContainer = document.getElementById('artifacts');
+            artifactsContainer.innerHTML = '';
+
+            if (!selectedCharacter.equipList) {
+                artifactsContainer.innerHTML = '<p>聖遺物情報が見つかりません</p>';
+                return;
+            }
+
+            selectedCharacter.equipList.forEach(equipment => {
+                if (equipment.flat && equipment.flat.itemType === 'ITEM_RELIQUARY') {
+                    const artifactCard = createArtifactCard(equipment);
+                    artifactsContainer.appendChild(artifactCard);
+                }
+            });
+        }
+
+        function createArtifactCard(equipment) {
+            const card = document.createElement('div');
+            card.className = 'artifact-card';
+
+            const flat = equipment.flat;
+            const reliquary = equipment.reliquary;
+
+            const header = document.createElement('div');
+            header.className = 'artifact-header';
+
+            const icon = document.createElement('div');
+            icon.className = 'artifact-icon';
+            icon.style.backgroundImage = `url(https://enka.network/ui/${flat.icon}.png)`;
+            icon.style.backgroundSize = 'cover';
+
+            const info = document.createElement('div');
+            info.className = 'artifact-info';
+            
+            const name = document.createElement('h3');
+            name.textContent = ARTIFACT_TYPES[flat.equipType] || flat.equipType;
+            
+            const setName = document.createElement('p');
+            setName.textContent = `★${flat.rankLevel} ${flat.nameTextMapHash ? '聖遺物' : '未知のセット'}`;
+
+            info.appendChild(name);
+            info.appendChild(setName);
+            header.appendChild(icon);
+            header.appendChild(info);
+
+            const statsList = document.createElement('ul');
+            statsList.className = 'stats-list';
+
+            // メインステータス
+            if (reliquary && reliquary.mainPropId) {
+                const mainStat = createStatItem('メインステータス', reliquary.mainPropId, flat.reliquaryMainstat);
+                statsList.appendChild(mainStat);
+            }
+
+            // サブステータス
+            if (flat.reliquarySubstats) {
+                flat.reliquarySubstats.forEach(substat => {
+                    const subStatItem = createStatItem('サブステータス', substat.appendPropId, substat);
+                    statsList.appendChild(subStatItem);
+                });
+            }
+
+            const scoreDisplay = document.createElement('div');
+            scoreDisplay.className = 'score-display';
+            
+            const scoreTitle = document.createElement('h4');
+            scoreTitle.textContent = '聖遺物スコア';
+            
+            const scoreValue = document.createElement('div');
+            scoreValue.className = 'score-value';
+            scoreValue.textContent = calculateArtifactScore(equipment).toFixed(1);
+
+            scoreDisplay.appendChild(scoreTitle);
+            scoreDisplay.appendChild(scoreValue);
+
+            card.appendChild(header);
+            card.appendChild(statsList);
+            card.appendChild(scoreDisplay);
+
+            return card;
+        }
+
+        function createStatItem(type, propId, statData) {
+            const item = document.createElement('li');
+            
+            const name = document.createElement('span');
+            name.className = 'stat-name';
+            name.textContent = STAT_NAMES[propId] || propId;
+            
+            const value = document.createElement('span');
+            value.className = 'stat-value';
+            
+            if (statData) {
+                let displayValue = statData.statValue || 0;
+                if (propId.includes('PERCENT') || propId === 'FIGHT_PROP_CRITICAL' || propId === 'FIGHT_PROP_CRITICAL_HURT') {
+                    displayValue = (displayValue * 100).toFixed(1) + '%';
+                } else {
+                    displayValue = Math.round(displayValue);
+                }
+                value.textContent = displayValue;
+            } else {
+                value.textContent = '0';
+            }
+
+            item.appendChild(name);
+            item.appendChild(value);
+            
+            return item;
+        }
+
+        function calculateArtifactScore(equipment) {
+            let score = 0;
+            const flat = equipment.flat;
+
+            if (flat.reliquarySubstats) {
+                flat.reliquarySubstats.forEach(substat => {
+                    const propId = substat.appendPropId;
+                    const value = substat.statValue || 0;
+                    const weight = SCORE_WEIGHTS[propId] || 0;
+                    
+                    if (propId.includes('PERCENT') || propId === 'FIGHT_PROP_CRITICAL' || propId === 'FIGHT_PROP_CRITICAL_HURT') {
+                        score += (value * 100) * weight;
+                    } else {
+                        score += value * weight;
+                    }
+                });
+            }
+
+            return score;
+        }
+
+        function calculateTotalScore() {
+            let totalScore = 0;
+            const scoreBreakdown = {};
+            const artifacts = [];
+
+            if (selectedCharacter.equipList) {
+                selectedCharacter.equipList.forEach(equipment => {
+                    if (equipment.flat && equipment.flat.itemType === 'ITEM_RELIQUARY') {
+                        const artifactScore = typeof calculateAdvancedArtifactScore !== 'undefined' 
+                            ? calculateAdvancedArtifactScore(equipment, selectedCharacter.avatarId)
+                            : calculateArtifactScore(equipment);
+                        const artifactType = ARTIFACT_TYPES[equipment.flat.equipType] || equipment.flat.equipType;
+                        
+                        totalScore += artifactScore;
+                        scoreBreakdown[artifactType] = artifactScore;
+                        artifacts.push(equipment);
+                    }
+                });
+            }
+
+            document.getElementById('total-score-value').textContent = totalScore.toFixed(1);
+            
+            const breakdownContainer = document.getElementById('score-breakdown');
+            breakdownContainer.innerHTML = '';
+            
+            Object.entries(scoreBreakdown).forEach(([type, score]) => {
+                const item = document.createElement('div');
+                item.className = 'score-item';
+                
+                const title = document.createElement('h4');
+                title.textContent = type;
+                
+                const scoreElement = document.createElement('div');
+                scoreElement.className = 'score';
+                scoreElement.textContent = score.toFixed(1);
+                
+                // スコアランクの表示
+                if (typeof getScoreRank !== 'undefined') {
+                    const rank = getScoreRank(score);
+                    scoreElement.style.color = rank.color;
+                    item.title = `${rank.rank}ランク - ${rank.description}`;
+                }
+                
+                item.appendChild(title);
+                item.appendChild(scoreElement);
+                breakdownContainer.appendChild(item);
+            });
+
+            document.getElementById('total-score').style.display = 'block';
+            
+            // セット効果の表示
+            displaySetBonuses();
+            
+            // 改善提案の表示
+            displaySuggestions(artifacts);
+            
+            // エクスポート機能の表示
+            document.getElementById('export').style.display = 'block';
+        }
+
+        function displaySetBonuses() {
+            if (typeof calculateSetBonus === 'undefined') return;
+            
+            const setBonuses = calculateSetBonus(selectedCharacter.equipList);
+            const container = document.getElementById('set-bonus-list');
+            container.innerHTML = '';
+            
+            if (setBonuses.length === 0) {
+                container.innerHTML = '<p>アクティブなセット効果はありません</p>';
+            } else {
+                setBonuses.forEach(bonus => {
+                    const item = document.createElement('div');
+                    item.className = 'set-bonus-item';
+                    
+                    const name = document.createElement('span');
+                    name.className = 'set-bonus-name';
+                    name.textContent = bonus.name;
+                    
+                    const pieces = document.createElement('span');
+                    pieces.className = 'set-bonus-pieces';
+                    pieces.textContent = `${bonus.pieces}個装備`;
+                    
+                    item.appendChild(name);
+                    item.appendChild(pieces);
+                    container.appendChild(item);
+                });
+            }
+            
+            document.getElementById('set-bonus').style.display = 'block';
+        }
+
+        function displaySuggestions(artifacts) {
+            if (typeof getImprovementSuggestions === 'undefined') return;
+            
+            const suggestions = getImprovementSuggestions(artifacts, selectedCharacter.avatarId);
+            const container = document.getElementById('suggestions-list');
+            container.innerHTML = '';
+            
+            suggestions.forEach(suggestion => {
+                const item = document.createElement('div');
+                item.className = `suggestion-item suggestion-${suggestion.priority}`;
+                
+                const icon = document.createElement('div');
+                icon.className = 'suggestion-icon';
+                icon.textContent = suggestion.priority === 'high' ? '!' : 
+                                   suggestion.priority === 'medium' ? '⚠' : 'ℹ';
+                
+                const message = document.createElement('div');
+                message.textContent = suggestion.message;
+                
+                item.appendChild(icon);
+                item.appendChild(message);
+                container.appendChild(item);
+            });
+            
+            document.getElementById('suggestions').style.display = 'block';
+        }
+
+        function exportToJSON() {
+            const data = {
+                character: {
+                    id: selectedCharacter.avatarId,
+                    name: getCharacterName(selectedCharacter.avatarId),
+                    level: selectedCharacter.propMap['4001']?.val || 0,
+                    constellation: selectedCharacter.talentIdList ? selectedCharacter.talentIdList.length : 0
+                },
+                artifacts: [],
+                totalScore: 0,
+                timestamp: new Date().toISOString()
+            };
+
+            if (selectedCharacter.equipList) {
+                selectedCharacter.equipList.forEach(equipment => {
+                    if (equipment.flat && equipment.flat.itemType === 'ITEM_RELIQUARY') {
+                        const score = typeof calculateAdvancedArtifactScore !== 'undefined'
+                            ? calculateAdvancedArtifactScore(equipment, selectedCharacter.avatarId)
+                            : calculateArtifactScore(equipment);
+                        
+                        data.artifacts.push({
+                            type: ARTIFACT_TYPES[equipment.flat.equipType],
+                            level: equipment.reliquary?.level || 0,
+                            mainStat: equipment.flat.reliquaryMainstat,
+                            subStats: equipment.flat.reliquarySubstats,
+                            score: score
+                        });
+                        
+                        data.totalScore += score;
+                    }
+                });
+            }
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `genshin_artifacts_${data.character.name}_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportToImage() {
+            // html2canvasライブラリが必要ですが、ここでは簡易版を実装
+            alert('画像エクスポート機能は開発中です。JSONエクスポートをご利用ください。');
+        }
+
+        function shareResults() {
+            const totalScore = document.getElementById('total-score-value').textContent;
+            const characterName = getCharacterName(selectedCharacter.avatarId);
+            
+            const shareText = `${characterName}の聖遺物スコア: ${totalScore}点\n原神聖遺物計算機で計算しました！`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: '原神聖遺物スコア',
+                    text: shareText,
+                    url: window.location.href
+                });
+            } else {
+                navigator.clipboard.writeText(shareText).then(() => {
+                    alert('結果がクリップボードにコピーされました！');
+                });
+            }
+        }
+
+        function getCharacterName(avatarId) {
+            return CHARACTER_NAMES[avatarId] || `キャラクター ${avatarId}`;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        // Enter キーでの検索をサポート
+        document.getElementById('uid').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                fetchPlayerData();
+            }
+        });
+
+        // キャラクター選択の変更時の処理
+        document.getElementById('character-select').addEventListener('change', function() {
+            if (this.value !== '') {
+                document.getElementById('calculate-btn').disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
