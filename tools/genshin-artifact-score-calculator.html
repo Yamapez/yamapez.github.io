@@ -409,33 +409,114 @@
             showStatus('loading', 'データを取得中...');
             
             try {
-                const proxyUrl = 'https://api.allorigins.win/get?url=';
-                const apiUrl = `https://enka.network/api/uid/${uid}`;
-                const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+                // 複数の方法を順番に試行
+                let gameData = null;
+                let lastError = null;
                 
-                if (!response.ok) {
-                    throw new Error('APIからのデータ取得に失敗しました');
+                // 方法1: CORSプロキシを使用
+                try {
+                    console.log('方法1: CORSプロキシを試行中...');
+                    const proxyUrl = 'https://api.allorigins.win/get?url=';
+                    const apiUrl = `https://enka.network/api/uid/${uid}`;
+                    const response = await fetch(proxyUrl + encodeURIComponent(apiUrl));
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('プロキシ応答:', data);
+                    
+                    if (data.contents) {
+                        gameData = JSON.parse(data.contents);
+                        console.log('方法1成功:', gameData);
+                    }
+                } catch (error) {
+                    console.log('方法1失敗:', error);
+                    lastError = error;
                 }
                 
-                const data = await response.json();
+                // 方法2: 直接APIアクセス
+                if (!gameData) {
+                    try {
+                        console.log('方法2: 直接APIアクセスを試行中...');
+                        const response = await fetch(`https://enka.network/api/uid/${uid}`, {
+                            mode: 'cors',
+                            headers: {
+                                'Accept': 'application/json',
+                                'User-Agent': 'Mozilla/5.0'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        
+                        gameData = await response.json();
+                        console.log('方法2成功:', gameData);
+                    } catch (error) {
+                        console.log('方法2失敗:', error);
+                        lastError = error;
+                    }
+                }
                 
-                try {
-                    gameData = JSON.parse(data.contents);
-                } catch (e) {
-                    throw new Error('データの解析に失敗しました');
+                // 方法3: 別のプロキシ
+                if (!gameData) {
+                    try {
+                        console.log('方法3: 別のプロキシを試行中...');
+                        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+                        const response = await fetch(proxyUrl + `https://enka.network/api/uid/${uid}`, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+                        
+                        gameData = await response.json();
+                        console.log('方法3成功:', gameData);
+                    } catch (error) {
+                        console.log('方法3失敗:', error);
+                        lastError = error;
+                    }
+                }
+                
+                if (!gameData) {
+                    throw lastError || new Error('全ての取得方法が失敗しました');
+                }
+                
+                // レスポンスの検証
+                if (gameData.detail) {
+                    throw new Error(`API エラー: ${gameData.detail}`);
                 }
                 
                 if (!gameData.avatarInfoList || gameData.avatarInfoList.length === 0) {
-                    throw new Error('ショーケースが非公開またはキャラクターが設定されていません');
+                    throw new Error('ショーケースが非公開、またはキャラクターが設定されていません。ゲーム内で「キャラクター詳細」→「ショーケース設定」を公開に設定してください。');
                 }
                 
+                // グローバル変数に保存
+                window.gameData = gameData;
+                
+                console.log('最終データ:', gameData);
                 populateCharacters();
                 showStatus('success', `${gameData.avatarInfoList.length}体のキャラクターを読み込みました！`);
                 document.getElementById('characterSelect').classList.remove('hidden');
                 
             } catch (error) {
-                showStatus('error', error.message);
                 console.error('API Error:', error);
+                let errorMessage = error.message;
+                
+                if (errorMessage.includes('NetworkError') || errorMessage.includes('Failed to fetch')) {
+                    errorMessage = 'ネットワークエラーが発生しました。インターネット接続を確認してください。';
+                } else if (errorMessage.includes('HTTP 429')) {
+                    errorMessage = 'APIのレート制限に達しました。しばらく待ってから再試行してください。';
+                } else if (errorMessage.includes('HTTP 500')) {
+                    errorMessage = 'Enka.Network APIに問題があります。しばらく待ってから再試行してください。';
+                }
+                
+                showStatus('error', errorMessage);
             } finally {
                 loadBtn.disabled = false;
                 loadBtn.textContent = 'データを読み込み';
@@ -454,9 +535,16 @@
             const select = document.getElementById('characters');
             select.innerHTML = '<option value="">キャラクターを選択...</option>';
             
-            gameData.avatarInfoList.forEach((character, index) => {
+            if (!window.gameData || !window.gameData.avatarInfoList) {
+                console.error('ゲームデータが見つかりません');
+                return;
+            }
+            
+            window.gameData.avatarInfoList.forEach((character, index) => {
                 const name = CHARACTER_NAMES[character.avatarId] || `キャラクター ${character.avatarId}`;
                 const level = Math.round(character.propMap?.["4001"]?.val || 0);
+                
+                console.log(`キャラクター ${index}: ID=${character.avatarId}, Name=${name}, Level=${level}`);
                 
                 const option = document.createElement('option');
                 option.value = index;
@@ -476,8 +564,15 @@
                 return;
             }
             
-            const character = gameData.avatarInfoList[index];
+            if (!window.gameData || !window.gameData.avatarInfoList) {
+                showStatus('error', 'ゲームデータが見つかりません');
+                return;
+            }
+            
+            const character = window.gameData.avatarInfoList[index];
             const name = CHARACTER_NAMES[character.avatarId] || `キャラクター ${character.avatarId}`;
+            
+            console.log('選択されたキャラクター:', character);
             
             if (!character.equipList) {
                 showStatus('error', 'このキャラクターには装備データがありません');
@@ -485,6 +580,7 @@
             }
             
             const stats = calculateArtifactStats(character.equipList);
+            console.log('計算された統計:', stats);
             
             // キャラクター情報表示
             document.getElementById('selectedCharacterName').textContent = name;
@@ -500,6 +596,7 @@
             const score = (stats.critRate * 2) + stats.critDmg + (stats.atk * 0.75) + 
                          (stats.hp * 0.75) + (stats.def * 0.75) + (stats.em * 0.25) + (stats.er * 0.75);
             
+            console.log('計算されたスコア:', score);
             updateScore(score);
         }
         
@@ -515,37 +612,63 @@
                 er: 0
             };
             
-            equipList.forEach(item => {
-                if (!item.reliquary?.appendPropIdList) return;
+            console.log('装備リスト:', equipList);
+            
+            equipList.forEach((item, index) => {
+                console.log(`装備 ${index}:`, item);
+                
+                if (!item.reliquary) {
+                    console.log(`装備 ${index} は聖遺物ではありません`);
+                    return;
+                }
+                
+                if (!item.reliquary.appendPropIdList) {
+                    console.log(`装備 ${index} にサブステータスがありません`);
+                    return;
+                }
+                
+                console.log(`聖遺物 ${index} のサブステータス:`, item.reliquary.appendPropIdList);
                 
                 item.reliquary.appendPropIdList.forEach(prop => {
                     const value = prop.statValue;
+                    console.log(`ステータス: ${prop.propId} = ${value}`);
+                    
                     switch (prop.propId) {
                         case "FIGHT_PROP_CRITICAL":
                             stats.critRate += value * 100;
+                            console.log(`会心率追加: ${value * 100}%`);
                             break;
                         case "FIGHT_PROP_CRITICAL_HURT":
                             stats.critDmg += value * 100;
+                            console.log(`会心ダメージ追加: ${value * 100}%`);
                             break;
                         case "FIGHT_PROP_ATTACK_PERCENT":
                             stats.atk += value * 100;
+                            console.log(`攻撃力%追加: ${value * 100}%`);
                             break;
                         case "FIGHT_PROP_HP_PERCENT":
                             stats.hp += value * 100;
+                            console.log(`HP%追加: ${value * 100}%`);
                             break;
                         case "FIGHT_PROP_DEFENSE_PERCENT":
                             stats.def += value * 100;
+                            console.log(`防御力%追加: ${value * 100}%`);
                             break;
                         case "FIGHT_PROP_ELEMENT_MASTERY":
                             stats.em += value;
+                            console.log(`元素熟知追加: ${value}`);
                             break;
                         case "FIGHT_PROP_CHARGE_EFFICIENCY":
                             stats.er += value * 100;
+                            console.log(`元素チャージ効率追加: ${value * 100}%`);
                             break;
+                        default:
+                            console.log(`未知のステータス: ${prop.propId}`);
                     }
                 });
             });
             
+            console.log('最終統計:', stats);
             return stats;
         }
         
