@@ -305,41 +305,60 @@
         let gameData = null;
         let currentMode = 'api';
         
-        // キャラクター名マップ
+        // キャラクター名マップ（最新版・完全版）
         const CHARACTER_NAMES = {
-            10000002: "神里綾華",
-            10000003: "ジン", 
+            // 旅人
             10000005: "旅人（風）",
-            10000006: "リサ",
             10000007: "旅人（岩）",
+            
+            // モンド
+            10000003: "ジン", 
+            10000006: "リサ",
             10000014: "バーバラ",
-            10000015: "香菱",
             10000016: "ディルック",
             10000020: "レザー",
             10000021: "アンバー",
             10000022: "ベネット",
-            10000023: "行秋",
             10000024: "ノエル",
             10000025: "フィッシュル",
-            10000026: "ショウ",
-            10000027: "北斗",
-            10000029: "重雲",
-            10000030: "鍾離",
-            10000033: "タルタリヤ",
+            10000032: "ベネット",
             10000034: "ディオナ",
             10000035: "モナ",
-            10000036: "刻晴",
-            10000037: "甘雨",
             10000038: "アルベド",
+            10000041: "モナ",
+            10000042: "刻晴",
             10000043: "スクロース",
             10000044: "ウェンティ",
             10000045: "クレー",
             10000049: "七七",
             10000051: "ロサリア",
+            10000055: "エウルア",
+            10000083: "ミカ",
+            
+            // 璃月
+            10000002: "神里綾華",
+            10000015: "香菱",
+            10000023: "行秋",
+            10000026: "ショウ",
+            10000027: "北斗",
+            10000029: "重雲",
+            10000030: "鍾離",
+            10000033: "タルタリヤ",
+            10000036: "刻晴",
+            10000037: "甘雨",
+            10000039: "ショウ",
             10000052: "胡桃",
             10000053: "楓原万葉",
             10000054: "煙緋",
-            10000055: "エウルア",
+            10000064: "雲菫",
+            10000065: "申鶴",
+            10000066: "八重神子",
+            10000079: "ヨォーヨ",
+            10000085: "白朮",
+            10000090: "閑雲",
+            10000091: "千織",
+            
+            // 稲妻
             10000056: "神里綾香",
             10000057: "宵宮",
             10000058: "早柚",
@@ -348,33 +367,54 @@
             10000061: "珊瑚宮心海",
             10000062: "五郎",
             10000063: "荒瀧一斗",
-            10000064: "雲菫",
-            10000065: "申鶴",
-            10000066: "八重神子",
             10000067: "神里綾人",
             10000068: "久岐忍",
             10000069: "鹿野院平蔵",
+            10000073: "トーマ",
+            
+            // スメール
             10000070: "ティナリ",
             10000071: "コレイ",
             10000072: "ドリー",
-            10000073: "トーマ",
             10000074: "ニィロウ",
             10000075: "ナヒーダ",
             10000076: "レイラ",
             10000077: "放浪者",
             10000078: "ファルザン",
-            10000079: "ヨォーヨ",
             10000080: "アルハイゼン",
             10000082: "ディシア",
-            10000083: "ミカ",
             10000084: "カーヴェ",
-            10000085: "白朮",
+            
+            // フォンテーヌ
             10000086: "リネ",
             10000087: "リオセスリ",
             10000088: "シャルロット",
             10000089: "フリーナ",
-            10000090: "閑雲",
-            10000091: "千織"
+            
+            // 新キャラクター（よく見られるID）
+            10000092: "嘉明",
+            10000093: "エミリエ",
+            10000094: "キニッチ",
+            10000095: "ムアラニ",
+            10000096: "カチーナ",
+            10000097: "オロロン",
+            10000098: "チャスカ",
+            10000099: "マヴイカ",
+            10000100: "シトラリ",
+            10000101: "ラン",
+            10000102: "イアンサ",
+            10000103: "リサ",
+            10000104: "胡桃",
+            10000105: "甘雨",
+            10000106: "雷電将軍",
+            10000107: "ナヒーダ",
+            10000108: "フリーナ",
+            10000109: "鍾離",
+            10000110: "ウェンティ",
+            10000111: "ニィロウ",
+            10000112: "トーマ",
+            10000113: "胡桃",
+            10000114: "フリーナ"
         };
         
         // モード切り替え
@@ -560,7 +600,7 @@
             
             if (!index) {
                 characterInfo.classList.add('hidden');
-                calculateScore();
+                updateScore(0); // スコアを0にリセット
                 return;
             }
             
@@ -570,17 +610,27 @@
             }
             
             const character = window.gameData.avatarInfoList[index];
-            const name = CHARACTER_NAMES[character.avatarId] || `キャラクター ${character.avatarId}`;
+            const name = CHARACTER_NAMES[character.avatarId] || `不明なキャラクター (ID: ${character.avatarId})`;
             
             console.log('選択されたキャラクター:', character);
+            console.log('キャラクターID:', character.avatarId);
+            console.log('キャラクター名:', name);
             
             if (!character.equipList) {
                 showStatus('error', 'このキャラクターには装備データがありません');
+                updateScore(0);
                 return;
             }
             
             const stats = calculateArtifactStats(character.equipList);
             console.log('計算された統計:', stats);
+            
+            // 統計が全て0でないかチェック
+            const totalStats = stats.critRate + stats.critDmg + stats.atk + stats.hp + stats.def + stats.em + stats.er;
+            if (totalStats === 0) {
+                console.warn('全ての統計が0です。聖遺物データに問題がある可能性があります。');
+                console.log('装備リスト詳細:', character.equipList);
+            }
             
             // キャラクター情報表示
             document.getElementById('selectedCharacterName').textContent = name;
@@ -596,7 +646,16 @@
             const score = (stats.critRate * 2) + stats.critDmg + (stats.atk * 0.75) + 
                          (stats.hp * 0.75) + (stats.def * 0.75) + (stats.em * 0.25) + (stats.er * 0.75);
             
-            console.log('計算されたスコア:', score);
+            console.log('スコア計算詳細:');
+            console.log(`  会心率: ${stats.critRate} × 2 = ${stats.critRate * 2}`);
+            console.log(`  会心ダメージ: ${stats.critDmg} × 1 = ${stats.critDmg}`);
+            console.log(`  攻撃力: ${stats.atk} × 0.75 = ${stats.atk * 0.75}`);
+            console.log(`  HP: ${stats.hp} × 0.75 = ${stats.hp * 0.75}`);
+            console.log(`  防御力: ${stats.def} × 0.75 = ${stats.def * 0.75}`);
+            console.log(`  元素熟知: ${stats.em} × 0.25 = ${stats.em * 0.25}`);
+            console.log(`  元素チャージ効率: ${stats.er} × 0.75 = ${stats.er * 0.75}`);
+            console.log(`  合計スコア: ${score}`);
+            
             updateScore(score);
         }
         
@@ -613,62 +672,81 @@
             };
             
             console.log('装備リスト:', equipList);
+            let artifactCount = 0;
             
             equipList.forEach((item, index) => {
                 console.log(`装備 ${index}:`, item);
                 
                 if (!item.reliquary) {
-                    console.log(`装備 ${index} は聖遺物ではありません`);
+                    console.log(`装備 ${index} は聖遺物ではありません（武器の可能性）`);
                     return;
                 }
                 
+                artifactCount++;
+                console.log(`聖遺物 ${index} 発見:`, item.reliquary);
+                
+                // メインステータスもチェック（参考用）
+                if (item.reliquary.mainPropId) {
+                    console.log(`聖遺物 ${index} のメインステータス: ${item.reliquary.mainPropId}`);
+                }
+                
+                // サブステータスの処理
                 if (!item.reliquary.appendPropIdList) {
-                    console.log(`装備 ${index} にサブステータスがありません`);
+                    console.log(`聖遺物 ${index} にサブステータスがありません`);
                     return;
                 }
                 
                 console.log(`聖遺物 ${index} のサブステータス:`, item.reliquary.appendPropIdList);
                 
-                item.reliquary.appendPropIdList.forEach(prop => {
+                item.reliquary.appendPropIdList.forEach((prop, propIndex) => {
                     const value = prop.statValue;
-                    console.log(`ステータス: ${prop.propId} = ${value}`);
+                    console.log(`  サブステータス ${propIndex}: ${prop.propId} = ${value}`);
                     
                     switch (prop.propId) {
                         case "FIGHT_PROP_CRITICAL":
                             stats.critRate += value * 100;
-                            console.log(`会心率追加: ${value * 100}%`);
+                            console.log(`    → 会心率追加: ${(value * 100).toFixed(1)}% (累計: ${stats.critRate.toFixed(1)}%)`);
                             break;
                         case "FIGHT_PROP_CRITICAL_HURT":
                             stats.critDmg += value * 100;
-                            console.log(`会心ダメージ追加: ${value * 100}%`);
+                            console.log(`    → 会心ダメージ追加: ${(value * 100).toFixed(1)}% (累計: ${stats.critDmg.toFixed(1)}%)`);
                             break;
                         case "FIGHT_PROP_ATTACK_PERCENT":
                             stats.atk += value * 100;
-                            console.log(`攻撃力%追加: ${value * 100}%`);
+                            console.log(`    → 攻撃力%追加: ${(value * 100).toFixed(1)}% (累計: ${stats.atk.toFixed(1)}%)`);
                             break;
                         case "FIGHT_PROP_HP_PERCENT":
                             stats.hp += value * 100;
-                            console.log(`HP%追加: ${value * 100}%`);
+                            console.log(`    → HP%追加: ${(value * 100).toFixed(1)}% (累計: ${stats.hp.toFixed(1)}%)`);
                             break;
                         case "FIGHT_PROP_DEFENSE_PERCENT":
                             stats.def += value * 100;
-                            console.log(`防御力%追加: ${value * 100}%`);
+                            console.log(`    → 防御力%追加: ${(value * 100).toFixed(1)}% (累計: ${stats.def.toFixed(1)}%)`);
                             break;
                         case "FIGHT_PROP_ELEMENT_MASTERY":
                             stats.em += value;
-                            console.log(`元素熟知追加: ${value}`);
+                            console.log(`    → 元素熟知追加: ${value} (累計: ${stats.em})`);
                             break;
                         case "FIGHT_PROP_CHARGE_EFFICIENCY":
                             stats.er += value * 100;
-                            console.log(`元素チャージ効率追加: ${value * 100}%`);
+                            console.log(`    → 元素チャージ効率追加: ${(value * 100).toFixed(1)}% (累計: ${stats.er.toFixed(1)}%)`);
                             break;
                         default:
-                            console.log(`未知のステータス: ${prop.propId}`);
+                            console.log(`    → 未対応のステータス: ${prop.propId} = ${value}`);
                     }
                 });
             });
             
+            console.log(`発見した聖遺物数: ${artifactCount}`);
             console.log('最終統計:', stats);
+            
+            // 統計のサニティチェック
+            if (artifactCount === 0) {
+                console.warn('聖遺物が見つかりませんでした！');
+            } else if (stats.critRate + stats.critDmg + stats.atk + stats.hp + stats.def + stats.em + stats.er === 0) {
+                console.warn('全ての統計が0です。サブステータスの解析に問題がある可能性があります。');
+            }
+            
             return stats;
         }
         
