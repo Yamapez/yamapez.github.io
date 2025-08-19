@@ -1,23 +1,8 @@
-# YouTube ダウンローダー ツール
+# YouTube ダウンローダー ツール設計図
 
 ## 📋 プロジェクト概要
 
 YouTube動画・音声をダウンロードするWebベースのツールです。ユーザーフレンドリーなインターフェースと高度な機能を提供します。
-
-## 🚀 クイックスタート
-
-### 統合版（推奨）
-最も簡単に使用できる統合版：
-- **ファイル**: `youtube-downloader-integrated.html`
-- **機能**: 全機能をワンファイルに統合
-- **使用方法**: ブラウザで直接開くだけ
-
-### プロダクション版（高機能）
-本格的なAPI連携版：
-- **フロントエンド**: `youtube-downloader-pro.html`
-- **CSS**: `youtube-downloader-pro.css`
-- **JavaScript**: `youtube-downloader-pro.js`
-- **バックエンド**: `../api/` ディレクトリ
 
 ## 🎯 主要機能
 
@@ -44,61 +29,6 @@ YouTube動画・音声をダウンロードするWebベースのツールです�
    - キーボードショートカット
    - 設定の自動保存
    - ダウンロード履歴
-
-## 📁 ファイル構成
-
-### 統合版（推奨）
-```
-youtube-downloader-integrated.html    # 全機能統合版（CSS/JS込み）
-```
-
-### プロダクション版
-```
-youtube-downloader-pro.html           # メインHTML
-youtube-downloader-pro.css            # スタイルシート
-youtube-downloader-pro.js             # JavaScript
-```
-
-### レガシー版
-```
-youtube-downloader.html               # 基本版（インライン）
-youtube-downloader.css                # 基本スタイル
-youtube-downloader.js                 # 基本JavaScript
-youtube-downloader-clean.html         # 分離版
-```
-
-## 🚀 使用方法
-
-### 1. 統合版の使用（最も簡単）
-
-1. `youtube-downloader-integrated.html` をブラウザで開く
-2. YouTubeのURLを入力
-3. 形式（動画/音声）を選択
-4. 品質を選択（動画の場合）
-5. ダウンロードボタンをクリック
-
-### 2. プロダクション版の使用（API連携）
-
-#### 前提条件
-- Node.js（v14以上）
-- FFmpeg
-
-#### セットアップ
-```bash
-# APIディレクトリに移動
-cd ../api
-
-# 依存関係インストール
-npm install
-
-# サーバー起動
-npm start
-```
-
-#### 使用手順
-1. APIサーバーが起動していることを確認
-2. `youtube-downloader-pro.html` をブラウザで開く
-3. 通常の手順でダウンロード
 
 ## 🏗️ アーキテクチャ
 
