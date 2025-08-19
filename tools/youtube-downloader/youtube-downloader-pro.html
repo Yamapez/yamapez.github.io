@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube ダウンローダー Pro</title>
+    <meta name="description" content="本格的なYouTube動画・音声ダウンローダー - サーバーサイド処理で高品質ダウンロード">
+    <meta name="keywords" content="YouTube, ダウンロード, 動画, 音声, MP4, MP3, 高品質">
+    <link rel="stylesheet" href="youtube-downloader.css">
+    <link rel="stylesheet" href="youtube-downloader-pro.css">
+    <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 YouTube ダウンローダー Pro</h1>
+            <p>本格的なサーバーサイド処理で高品質ダウンロード</p>
+            <div class="version-badge">v1.0 Production</div>
+        </div>
+
+        <div class="content">
+            <div class="warning-box">
+                <strong>📢 本格実装版</strong>
+                このツールはサーバーサイドで実際の動画処理を行います。ytdl-core + FFmpegによる高品質な動画・音声ダウンロードが可能です。
+            </div>
+
+            <form id="downloadForm">
+                <!-- 動画プレビューエリア -->
+                <div id="videoPreview" class="video-preview" style="display: none;"></div>
+
+                <div class="input-group">
+                    <label for="youtube-url">YouTubeのURL</label>
+                    <input 
+                        type="url" 
+                        id="youtube-url" 
+                        class="url-input" 
+                        placeholder="https://www.youtube.com/watch?v=... または https://youtu.be/..."
+                        required
+                        autocomplete="url"
+                        spellcheck="false"
+                    >
+                    <div class="url-help">
+                        URLを入力すると自動的に動画情報を取得し、利用可能な品質を表示します
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>ダウンロード形式</label>
+                    <div class="options-grid">
+                        <div class="option-card" onclick="selectOption('video')" role="button" tabindex="0" aria-label="動画形式でダウンロード">
+                            <input type="radio" name="downloadType" value="video" id="video-option" checked>
+                            <span class="option-icon" aria-hidden="true">🎬</span>
+                            <div class="option-title">動画</div>
+                            <div class="option-desc">映像と音声両方（MP4）</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('audio')" role="button" tabindex="0" aria-label="音声のみダウンロード">
+                            <input type="radio" name="downloadType" value="audio" id="audio-option">
+                            <span class="option-icon" aria-hidden="true">🎵</span>
+                            <div class="option-title">音声のみ</div>
+                            <div class="option-desc">MP3形式で保存</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group quality-selector">
+                    <label for="quality">品質設定</label>
+                    <select id="quality" class="quality-dropdown" aria-label="ダウンロード品質を選択">
+                        <option value="1080p">1080p (フルHD)</option>
+                        <option value="720p" selected>720p (HD)</option>
+                        <option value="480p">480p (標準画質)</option>
+                        <option value="360p">360p (低画質)</option>
+                    </select>
+                    <div class="quality-help">
+                        動画情報取得後、実際に利用可能な品質が表示されます
+                    </div>
+                </div>
+
+                <div class="advanced-options">
+                    <details>
+                        <summary>⚙️ 詳細設定</summary>
+                        <div class="advanced-content">
+                            <div class="setting-group">
+                                <label>
+                                    <input type="checkbox" id="highQualityAudio" checked>
+                                    高品質音声を優先（動画ダウンロード時）
+                                </label>
+                            </div>
+                            <div class="setting-group">
+                                <label>
+                                    <input type="checkbox" id="fastStart" checked>
+                                    高速再生開始（MP4最適化）
+                                </label>
+                            </div>
+                            <div class="setting-group">
+                                <label>
+                                    <input type="checkbox" id="downloadNotification" checked>
+                                    ダウンロード完了通知
+                                </label>
+                            </div>
+                        </div>
+                    </details>
+                </div>
+
+                <button type="submit" class="download-btn" id="downloadBtn" aria-describedby="download-help">
+                    <span id="btnText">📥 ダウンロード開始</span>
+                </button>
+                <small id="download-help" class="sr-only">Ctrl+Enterでも実行、ESCでキャンセルできます</small>
+            </form>
+
+            <div class="progress-container" id="progressContainer" role="progressbar" aria-live="polite">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">準備中...</div>
+                <div class="progress-stats" id="progressStats"></div>
+            </div>
+
+            <div class="result-container" id="resultContainer" role="alert" aria-live="assertive">
+                <div id="resultMessage"></div>
+            </div>
+
+            <div class="features-info">
+                <h3>✨ Pro版の機能</h3>
+                <ul>
+                    <li><strong>実際のダウンロード</strong>：ytdl-core + FFmpegによる本格処理</li>
+                    <li><strong>高品質対応</strong>：4K (2160p) まで対応</li>
+                    <li><strong>音声抽出</strong>：最大320kbps MP3出力</li>
+                    <li><strong>リアルタイム処理</strong>：サーバーサイドでの高速変換</li>
+                    <li><strong>動画情報表示</strong>：タイトル、サムネイル、時間など</li>
+                    <li><strong>品質自動検出</strong>：利用可能な品質を自動表示</li>
+                    <li><strong>プログレス表示</strong>：詳細な処理状況</li>
+                    <li><strong>キャンセル機能</strong>：処理中のキャンセル対応</li>
+                </ul>
+            </div>
+
+            <div class="technical-info">
+                <h3>🔧 技術仕様</h3>
+                <div class="tech-grid">
+                    <div class="tech-item">
+                        <strong>バックエンド</strong>
+                        <span>Node.js + Express</span>
+                    </div>
+                    <div class="tech-item">
+                        <strong>動画処理</strong>
+                        <span>ytdl-core + FFmpeg</span>
+                    </div>
+                    <div class="tech-item">
+                        <strong>対応形式</strong>
+                        <span>MP4, MP3, WebM</span>
+                    </div>
+                    <div class="tech-item">
+                        <strong>最大品質</strong>
+                        <span>4K (2160p) / 320kbps</span>
+                    </div>
+                    <div class="tech-item">
+                        <strong>セキュリティ</strong>
+                        <span>レート制限、CORS対応</span>
+                    </div>
+                    <div class="tech-item">
+                        <strong>パフォーマンス</strong>
+                        <span>ストリーミング処理</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="keyboard-shortcuts">
+                <h4>⌨️ キーボードショートカット</h4>
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+                        <span>ダウンロード開始</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Esc</kbd>
+                        <span>処理キャンセル</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>V</kbd>
+                        <span>URL貼り付け</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Tab</kbd>
+                        <span>フィールド移動</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-status" id="apiStatus">
+                <h4>📡 API状態</h4>
+                <div class="status-indicator">
+                    <span class="status-dot" id="statusDot"></span>
+                    <span class="status-text" id="statusText">確認中...</span>
+                </div>
+            </div>
+        </div>
+
+        <footer class="tool-footer">
+            <p>
+                <small>
+                    YouTube Downloader Pro v1.0 - 
+                    <a href="https://github.com/Yamapez/yamapez.github.io" target="_blank" rel="noopener">GitHub</a> | 
+                    <a href="../tools/README.md" target="_blank" rel="noopener">ドキュメント</a> | 
+                    <a href="/api/health" target="_blank" rel="noopener">API状態</a>
+                </small>
+            </p>
+        </footer>
+    </div>
+
+    <script src="youtube-downloader-pro.js"></script>
+</body>
+</html>

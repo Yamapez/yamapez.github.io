@@ -109,6 +109,24 @@
                     </div>
                 </div>
             </div>
+
+            <div class="download-stats" id="downloadStats" style="display: none;"></div>
+
+            <div class="download-history" id="downloadHistory" style="display: none;">
+                <h3>📁 ダウンロード履歴</h3>
+                <div class="history-controls">
+                    <button type="button" class="btn-secondary" onclick="window.downloader.showHistory()">
+                        履歴を表示
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="window.downloader.clearHistory()">
+                        履歴をクリア
+                    </button>
+                    <button type="button" class="btn-secondary" onclick="window.downloader.exportHistory()">
+                        履歴をエクスポート
+                    </button>
+                </div>
+                <div class="history-list" id="historyList"></div>
+            </div>
         </div>
 
         <footer class="tool-footer">

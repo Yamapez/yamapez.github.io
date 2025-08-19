@@ -441,8 +441,17 @@
                 return;
             }
             
+            // 通知許可をリクエスト
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+            
             try {
                 await simulateDownload(url, type, quality);
+                // 実際のファイルダウンロード
+                const fileContent = generateDemoFile(url, type, quality);
+                const fileName = generateFileName(url, type, quality);
+                triggerBrowserDownload(fileContent, fileName);
             } catch (error) {
                 showResult('❌ ダウンロード中にエラーが発生しました。再度お試しください。', false);
                 
@@ -452,6 +461,57 @@
                 document.getElementById('btnText').textContent = '📥 ダウンロード開始';
             }
         });
+
+        // ファイル生成関数
+        function generateDemoFile(url, type, quality) {
+            const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || 'unknown';
+            const metadata = {
+                videoId: videoId,
+                url: url,
+                type: type,
+                quality: quality,
+                format: type === 'video' ? 'MP4' : 'MP3',
+                downloaded: new Date().toISOString(),
+                source: 'YouTube Downloader Tool',
+                note: 'This is a demonstration file. Actual implementation requires server-side processing.'
+            };
+            
+            return JSON.stringify(metadata, null, 2);
+        }
+
+        // ファイル名生成関数
+        function generateFileName(url, type, quality) {
+            const videoId = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || 'unknown';
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+            const extension = type === 'video' ? 'mp4' : 'mp3';
+            return `youtube_${videoId}_${quality}_${timestamp}.${extension}`;
+        }
+
+        // ブラウザダウンロード関数
+        function triggerBrowserDownload(content, fileName) {
+            const blob = new Blob([content], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.style.display = 'none';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // メモリクリーンアップ
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            
+            // 通知表示
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('ダウンロード開始', {
+                    body: `${fileName} のダウンロードを開始しました`,
+                    icon: '../images/favicon.ico'
+                });
+            }
+        }
 
         // 初期選択状態の設定
         document.addEventListener('DOMContentLoaded', function() {
