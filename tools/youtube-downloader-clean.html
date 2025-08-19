@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube ダウンローダー</title>
+    <meta name="description" content="YouTube動画・音声を簡単ダウンロード - 高品質で使いやすいWebツール">
+    <meta name="keywords" content="YouTube, ダウンロード, 動画, 音声, MP4, MP3">
+    <link rel="stylesheet" href="youtube-downloader.css">
+    <link rel="icon" href="../images/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 YouTube ダウンローダー</h1>
+            <p>動画・音声を簡単ダウンロード</p>
+        </div>
+
+        <div class="content">
+            <div class="warning-box">
+                <strong>⚠️ 重要な注意事項</strong>
+                このツールは教育目的のデモンストレーションです。実際の使用には適切なAPIキーとサーバーサイドの実装が必要です。著作権を遵守してご利用ください。
+            </div>
+
+            <form id="downloadForm">
+                <div class="input-group">
+                    <label for="youtube-url">YouTubeのURL</label>
+                    <input 
+                        type="url" 
+                        id="youtube-url" 
+                        class="url-input" 
+                        placeholder="https://www.youtube.com/watch?v=..."
+                        required
+                        autocomplete="url"
+                        spellcheck="false"
+                    >
+                </div>
+
+                <div class="input-group">
+                    <label>ダウンロード形式</label>
+                    <div class="options-grid">
+                        <div class="option-card" onclick="selectOption('video')" role="button" tabindex="0" aria-label="動画形式でダウンロード">
+                            <input type="radio" name="downloadType" value="video" id="video-option" checked>
+                            <span class="option-icon" aria-hidden="true">🎬</span>
+                            <div class="option-title">動画</div>
+                            <div class="option-desc">映像と音声両方</div>
+                        </div>
+                        <div class="option-card" onclick="selectOption('audio')" role="button" tabindex="0" aria-label="音声のみダウンロード">
+                            <input type="radio" name="downloadType" value="audio" id="audio-option">
+                            <span class="option-icon" aria-hidden="true">🎵</span>
+                            <div class="option-title">音声のみ</div>
+                            <div class="option-desc">MP3形式で保存</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group quality-selector">
+                    <label for="quality">品質設定</label>
+                    <select id="quality" class="quality-dropdown" aria-label="ダウンロード品質を選択">
+                        <option value="best">最高品質 (利用可能な最高画質)</option>
+                        <option value="2160p">2160p (4K Ultra HD)</option>
+                        <option value="1440p">1440p (2K Quad HD)</option>
+                        <option value="1080p">1080p (フルHD)</option>
+                        <option value="720p" selected>720p (HD)</option>
+                        <option value="480p">480p (標準画質)</option>
+                        <option value="360p">360p (低画質)</option>
+                        <option value="worst">最低品質 (データ節約)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="download-btn" id="downloadBtn" aria-describedby="download-help">
+                    <span id="btnText">📥 ダウンロード開始</span>
+                </button>
+                <small id="download-help" class="sr-only">Ctrl+Enterでも実行できます</small>
+            </form>
+
+            <div class="progress-container" id="progressContainer" role="progressbar" aria-live="polite">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">準備中...</div>
+            </div>
+
+            <div class="result-container" id="resultContainer" role="alert" aria-live="assertive">
+                <div id="resultMessage"></div>
+            </div>
+
+            <div class="features-info">
+                <h3>✨ 主な機能</h3>
+                <ul>
+                    <li><strong>高品質ダウンロード</strong>：360p〜4Kまで対応</li>
+                    <li><strong>音声抽出</strong>：128k〜320kbps MP3出力</li>
+                    <li><strong>リアルタイム進捗</strong>：詳細なプログレス表示</li>
+                    <li><strong>URL自動認識</strong>：複数のYouTube URL形式に対応</li>
+                    <li><strong>設定保存</strong>：前回の設定を自動記憶</li>
+                </ul>
+            </div>
+
+            <div class="keyboard-shortcuts">
+                <h4>⌨️ キーボードショートカット</h4>
+                <div class="shortcuts-grid">
+                    <div class="shortcut-item">
+                        <kbd>Ctrl</kbd> + <kbd>Enter</kbd>
+                        <span>ダウンロード開始</span>
+                    </div>
+                    <div class="shortcut-item">
+                        <kbd>Esc</kbd>
+                        <span>処理中止</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="tool-footer">
+            <p>
+                <small>
+                    このツールは教育目的のデモです。実際の使用時は<a href="#" target="_blank" rel="noopener">利用規約</a>をご確認ください。
+                </small>
+            </p>
+        </footer>
+    </div>
+
+    <script src="youtube-downloader.js"></script>
+</body>
+</html>
