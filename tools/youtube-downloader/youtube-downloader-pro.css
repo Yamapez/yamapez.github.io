@@ -1,0 +1,393 @@
+/* YouTube Downloader Pro Additional Styles */
+
+.version-badge {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.video-preview {
+    background: white;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.preview-content {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+}
+
+.preview-thumbnail {
+    position: relative;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+    width: 160px;
+    height: 90px;
+}
+
+.preview-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.preview-duration {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+    font-weight: 600;
+}
+
+.preview-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.preview-title {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.3;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.preview-author {
+    margin: 0 0 6px 0;
+    color: #666;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.preview-stats {
+    margin: 0;
+    color: #888;
+    font-size: 0.8em;
+    line-height: 1.4;
+}
+
+.url-help,
+.quality-help {
+    font-size: 0.85em;
+    color: #6c757d;
+    margin-top: 6px;
+    line-height: 1.4;
+}
+
+.advanced-options {
+    margin-bottom: 25px;
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.advanced-options summary {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    cursor: pointer;
+    font-weight: 600;
+    color: #495057;
+    user-select: none;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.advanced-options summary:hover {
+    background: #e9ecef;
+}
+
+.advanced-options[open] summary {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.advanced-content {
+    padding: 20px;
+    background: white;
+}
+
+.setting-group {
+    margin-bottom: 12px;
+}
+
+.setting-group:last-child {
+    margin-bottom: 0;
+}
+
+.setting-group label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95em;
+    color: #495057;
+    cursor: pointer;
+}
+
+.setting-group input[type="checkbox"] {
+    margin: 0;
+    transform: scale(1.2);
+}
+
+.progress-stats {
+    margin-top: 8px;
+    font-size: 0.85em;
+    color: #6c757d;
+    text-align: center;
+}
+
+.technical-info {
+    margin-top: 30px;
+    padding: 25px;
+    background: linear-gradient(135deg, #f1f3f4 0%, #e8eaed 100%);
+    border-radius: var(--border-radius);
+    border-left: 4px solid #4285f4;
+}
+
+.technical-info h3 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 1.2em;
+}
+
+.tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+}
+
+.tech-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 15px;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+}
+
+.tech-item strong {
+    color: #333;
+    font-size: 0.9em;
+}
+
+.tech-item span {
+    color: #666;
+    font-size: 0.85em;
+    text-align: right;
+}
+
+.api-status {
+    margin-top: 25px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: var(--border-radius);
+    border: 1px solid #e9ecef;
+}
+
+.api-status h4 {
+    margin-bottom: 12px;
+    color: #333;
+    font-size: 1em;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #6c757d;
+    animation: pulse 2s infinite;
+}
+
+.status-dot.online {
+    background: #28a745;
+}
+
+.status-dot.offline {
+    background: #dc3545;
+}
+
+.status-dot.warning {
+    background: #ffc107;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.status-text {
+    font-size: 0.9em;
+    color: #495057;
+    font-weight: 500;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+    .preview-content {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .preview-thumbnail {
+        width: 100%;
+        height: 180px;
+    }
+    
+    .tech-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .version-badge {
+        position: static;
+        display: inline-block;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width: 520px) {
+    .advanced-options summary {
+        padding: 12px 15px;
+        font-size: 0.95em;
+    }
+    
+    .advanced-content {
+        padding: 15px;
+    }
+    
+    .tech-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .tech-item span {
+        text-align: left;
+    }
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+    .video-preview {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .preview-title {
+        color: #f7fafc;
+    }
+    
+    .preview-author {
+        color: #a0aec0;
+    }
+    
+    .preview-stats {
+        color: #718096;
+    }
+    
+    .advanced-options {
+        border-color: #4a5568;
+    }
+    
+    .advanced-options summary {
+        background: #4a5568;
+        color: #e2e8f0;
+        border-color: #4a5568;
+    }
+    
+    .advanced-options summary:hover {
+        background: #2d3748;
+    }
+    
+    .advanced-content {
+        background: #2d3748;
+    }
+    
+    .setting-group label {
+        color: #e2e8f0;
+    }
+    
+    .technical-info {
+        background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        color: #e2e8f0;
+    }
+    
+    .technical-info h3 {
+        color: #f7fafc;
+    }
+    
+    .tech-item {
+        background: #4a5568;
+        border-color: #2d3748;
+    }
+    
+    .tech-item strong {
+        color: #f7fafc;
+    }
+    
+    .tech-item span {
+        color: #a0aec0;
+    }
+    
+    .api-status {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .api-status h4 {
+        color: #f7fafc;
+    }
+    
+    .status-text {
+        color: #e2e8f0;
+    }
+}
+
+/* 印刷スタイル */
+@media print {
+    .version-badge,
+    .advanced-options,
+    .download-btn,
+    .progress-container,
+    .result-container,
+    .api-status {
+        display: none !important;
+    }
+    
+    .video-preview {
+        border: 1px solid #ddd;
+        box-shadow: none;
+    }
+    
+    .technical-info,
+    .features-info {
+        background: #f9f9f9 !important;
+        color: #333 !important;
+    }
+}
